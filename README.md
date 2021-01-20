@@ -5,7 +5,7 @@ A Resiliency library for wrapping dependency calls. Heavily inspired by Hystrix
 The flow is simple
 1. We wrap execution in a timeout (... timeout)
 2. We then wrap that in a circuitbreaker (Failure Threshhold, over duration of time.)
-3. and further wrap that in a semaphore (maxParalellism)
+3. and further wrap that in a semaphore (maxParallelism)
 
 ### Caching
 A cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to fetch the result from that cache.
