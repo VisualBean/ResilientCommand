@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30907.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientCommand", "ResilientCommand\ResilientCommand.csproj", "{57D8F613-BC20-42BF-BA0B-3F612C85E3EE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientCommand.Tests", "ResilientCommand.Tests\ResilientCommand.Tests.csproj", "{A4A05226-D959-496D-8EEE-47F27755AD85}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{57D8F613-BC20-42BF-BA0B-3F612C85E3EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57D8F613-BC20-42BF-BA0B-3F612C85E3EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57D8F613-BC20-42BF-BA0B-3F612C85E3EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57D8F613-BC20-42BF-BA0B-3F612C85E3EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4A05226-D959-496D-8EEE-47F27755AD85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4A05226-D959-496D-8EEE-47F27755AD85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4A05226-D959-496D-8EEE-47F27755AD85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4A05226-D959-496D-8EEE-47F27755AD85}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3D8D9D7D-F387-453A-B9BF-3F5C2E97BDCA}
+	EndGlobalSection
+EndGlobal
