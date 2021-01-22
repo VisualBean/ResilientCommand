@@ -9,22 +9,22 @@ namespace ResilientCommand
     {
         private readonly ConcurrentDictionary<string, TResult> resultCache = new ConcurrentDictionary<string, TResult>();
         private readonly CircuitBreaker circuitBreaker;
-        private readonly Timeout timeout;
+        private readonly ExecutionTimeout executionTimeout;
         private readonly SemaphoreSlim semaphore;
         private readonly CommandKey commandKey;
-
+        private readonly CommandConfiguration configuration;
         private bool IsCachedResponseEnabled => GetCacheKey() != null;
 
-        public ResilientCommand(CommandKey commandKey = null, int timeoutInMiliseconds = 10000, CircuitBreakerSettings circuitBreakerSettings = null, int maxParallelism = 10)
+        public ResilientCommand(CommandKey commandKey = null, CommandConfiguration configuration = null)
         {
-            if (commandKey == null)
-            {
-                this.commandKey = new CommandKey(GetType().Name);
-            }
+            this.commandKey = commandKey ?? new CommandKey(GetType().Name);
 
-            circuitBreaker = CircuitBreakerFactory.GetOrCreateCircuitBreaker(commandKey, circuitBreakerSettings);
-            semaphore = SemaphoreFactory.GetOrCreateSemaphore(commandKey, maxParallelism);
-            timeout = new Timeout(timeoutInMiliseconds);
+            this.configuration = configuration ?? CommandConfiguration.CreateConfiguration();
+
+            circuitBreaker = CircuitBreakerFactory.Instance.GetOrCreateCircuitBreaker(commandKey, this.configuration.CircuitBreakerSettings);
+            executionTimeout = new ExecutionTimeout(this.configuration.ExecutionTimeoutSettings);
+            semaphore = SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
+
         }
 
         public abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
@@ -50,13 +50,12 @@ namespace ResilientCommand
             }
 
             try
-            {
-                //TODO: Potential failure if cancellationToken is already cancelled, then we release and throw due to maxsemaphore.
-                await semaphore.WaitAsync(cancellationToken);
+            {                
+                await semaphore.WaitAsync();
 
                 var task = timeout.ExecuteAsync(RunAsync, cancellationToken);
                 result = await circuitBreaker.ExecuteAsync((ct) => task, cancellationToken);
-                
+
                 if (IsCachedResponseEnabled)
                 {
                     resultCache.TryAdd(cacheKey, result);

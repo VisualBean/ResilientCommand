@@ -4,8 +4,11 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
 {
+  
     public class GenericTestableCommand : ResilientCommand<string>
     {
+        public static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: 20, minimumThroughput: 2);
+
         private readonly Func<CancellationToken, Task<string>> action;
         private readonly Func<string> fallbackAction;
         private readonly string cacheKey;
@@ -13,12 +16,12 @@ namespace ResilientCommand.Tests
         public GenericTestableCommand(
                 Func<CancellationToken, Task<string>> action,
                 Func<string> fallbackAction,
-                string groupKey,
-                int timeoutInMiliseconds,
-                string cacheKey = null) : base(
-            new GroupKey(groupKey),
-            timeoutInMiliseconds: timeoutInMiliseconds,
-            circuitBreakerSettings: new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: 20, minimumThroughput: 2)) 
+                string commandKey = null,
+                string cacheKey = null,
+                CommandConfiguration config = null) : base(
+            new CommandKey(commandKey),
+            config
+            ) 
         {
             this.action = action;
             this.fallbackAction = fallbackAction;

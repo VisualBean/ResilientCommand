@@ -17,8 +17,7 @@ namespace ResilientCommand.Tests
             var command = new GenericTestableCommand(
                     async (ct) => { ct.ThrowIfCancellationRequested(); return ""; },
                     () => null,
-                    groupKey: groupId,
-                    timeoutInMiliseconds: 1000);
+                    commandKey: groupId);
 
             var cts = new CancellationTokenSource();
             cts.Cancel();

@@ -1,15 +1,21 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ResilientCommand
 {
-    public class CircuitBreakerFactory
+    internal sealed class CircuitBreakerFactory
     {
-        private static ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>> circuitBreakerByGroup = new ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>>();
+        private static readonly Lazy<CircuitBreakerFactory>
+            instance =
+            new Lazy<CircuitBreakerFactory>
+                (() => new CircuitBreakerFactory());
 
-        internal static CircuitBreaker GetOrCreateCircuitBreaker(CommandKey commandKey, CircuitBreakerSettings circuitBreakerSettings)
+        private ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>> circuitBreakerByGroup = new ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>>();
+
+        internal static CircuitBreakerFactory Instance => instance.Value;
+
+        internal CircuitBreaker GetOrCreateCircuitBreaker(CommandKey commandKey, CircuitBreakerSettings circuitBreakerSettings)
         {
             return circuitBreakerByGroup.GetOrAdd(commandKey, new Lazy<CircuitBreaker>(() => new CircuitBreaker(circuitBreakerSettings))).Value;
         }

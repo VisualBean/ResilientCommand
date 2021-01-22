@@ -4,21 +4,29 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand
 {
-    internal class Timeout : IExecutionStrategy
+    internal class ExecutionTimeout : IExecutionStrategy
     {
         private readonly int timeoutInMiliseconds;
-
-        public Timeout(int timeoutInMiliseconds)
+        private bool isEnabled;
+        public ExecutionTimeout(ExecutionTimeoutSettings settings = null)
         {
-            if (timeoutInMiliseconds < 0)
+            settings = settings ?? ExecutionTimeoutSettings.DefaultExecutionTimeoutSettings;
+            isEnabled = settings.IsEnabled;
+
+            if (settings.ExecutionTimeoutInMiliseconds < 0)
             {
-                throw new ArgumentException($"{nameof(timeoutInMiliseconds)} must be greater or equal to 0.");
+                throw new ArgumentException($"{nameof(settings.ExecutionTimeoutInMiliseconds)} must be greater or equal to 0.");
             }
            
-            this.timeoutInMiliseconds = timeoutInMiliseconds;
+            this.timeoutInMiliseconds = (int)settings.ExecutionTimeoutInMiliseconds;
         }
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
+            if (!isEnabled)
+            {
+                return await innerAction(cancellationToken);
+            }
+
             var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             tokenSource.CancelAfter(timeoutInMiliseconds + 100);
 

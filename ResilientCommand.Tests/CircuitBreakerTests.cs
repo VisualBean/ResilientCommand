@@ -6,9 +6,27 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
 {
+    public class TestException : Exception
+    {
+    }
     [TestClass]
     public class CircuitBreakerTests
     {
+        static CommandConfiguration circuitBreakerConfigurationLowTimeout = CommandConfiguration.CreateConfiguration(config =>
+        {
+            config.CircuitBreakerSettings = GenericTestableCommand.SmallCircuitBreaker;
+        });
+
+        static CommandConfiguration circuitBreakerConfigurationDisabled = CommandConfiguration.CreateConfiguration(config =>
+       {
+           config.CircuitBreakerSettings = new CircuitBreakerSettings(isEnabled: false);
+       });
+
+        static CommandConfiguration circuitBreakerConfigurationHigherTimeout = CommandConfiguration.CreateConfiguration(config =>
+       {
+           config.CircuitBreakerSettings = GenericTestableCommand.SmallCircuitBreaker;
+       });
+
         [TestMethod]
         [ExpectedException(typeof(Polly.CircuitBreaker.BrokenCircuitException))]
         public async Task CircuitBreaker_InSameGroupWithFailures_ThrowsBrokenCircuit()
@@ -16,16 +34,41 @@ namespace ResilientCommand.Tests
             var groupId = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                 async (ct) => { await Task.Delay(20); return ""; },
+                 async (ct) => { throw new Exception(); },
                  () => "fallback",
-                 groupKey: groupId,
-                 timeoutInMiliseconds: 1);
+                 commandKey: groupId,
+                 config: circuitBreakerConfigurationLowTimeout);
 
             var command2 = new GenericTestableCommand(
                  (ct) => { throw new Exception(); },
                  () => null,
-                 groupKey: groupId,
-                 timeoutInMiliseconds: 1);
+                 commandKey: groupId,
+                 config: circuitBreakerConfigurationLowTimeout);
+
+            await command.ExecuteAsync(default);
+            await command.ExecuteAsync(default);
+            await command.ExecuteAsync(default);
+
+            var response = await command2.ExecuteAsync(default);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(AggregateException))]
+        public async Task CircuitBreaker_InSameGroupWithFailuresWithDisabledCircuit_DoesNotTripCircuit()
+        {
+            var groupId = Guid.NewGuid().ToString();
+
+            var command = new GenericTestableCommand(
+                 async (ct) => { throw new Exception(); },
+                 () => "fallback",
+                 commandKey: groupId,
+                 config: circuitBreakerConfigurationDisabled);
+
+            var command2 = new GenericTestableCommand(
+                 (ct) => { throw new TestException(); },
+                 () => null,
+                 commandKey: groupId,
+                 config: circuitBreakerConfigurationDisabled);
 
             await command.ExecuteAsync(default);
             await command.ExecuteAsync(default);
@@ -42,16 +85,16 @@ namespace ResilientCommand.Tests
             var groupId2 = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                 async (ct) => { await Task.Delay(20); return ""; },
+                 async (ct) => { throw new TestException(); },
                  () => "fallback",
-                 groupKey: groupId,
-                 timeoutInMiliseconds: 1);
+                 commandKey: groupId,
+                 config: circuitBreakerConfigurationLowTimeout);
 
             var command2 = new GenericTestableCommand(
-                 (ct) => { throw new Exception(); },
+                 (ct) => { throw new TestException(); },
                  () => null,
-                 groupKey: groupId2,
-                 timeoutInMiliseconds: 10);
+                 commandKey: groupId2,
+                 config: circuitBreakerConfigurationHigherTimeout);
 
             await command.ExecuteAsync(default);
             await command.ExecuteAsync(default);

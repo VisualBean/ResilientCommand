@@ -20,8 +20,7 @@ namespace ResilientCommand.Tests
                     async (ct) => { count++; return value; },
                     () => null,
                     cacheKey: "cacheKey",
-                    groupKey: groupId,
-                    timeoutInMiliseconds: 1000);
+                    commandKey: groupId);
 
             await command.ExecuteAsync(default);
             var response = await command.ExecuteAsync(default);
@@ -42,15 +41,13 @@ namespace ResilientCommand.Tests
                     async (ct) => { count++; return value; },
                     () => null,
                     cacheKey: "cacheKey",
-                    groupKey: groupId,
-                    timeoutInMiliseconds: 1000);
+                    commandKey: groupId);
 
             var command2 = new GenericTestableCommand(
                    async (ct) => { count++; return value; },
                    () => null,
                    cacheKey: "cacheKey",
-                   groupKey: groupId2,
-                   timeoutInMiliseconds: 1000);
+                   commandKey: groupId);
 
             await command.ExecuteAsync(default);
             var response = await command2.ExecuteAsync(default);

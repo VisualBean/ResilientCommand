@@ -6,21 +6,22 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand
 {
-    internal class CircuitBreaker : IExecutionStrategy
+    internal class CircuitBreaker
     {
+        private readonly bool isEnabled;
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
-       
-        public CircuitBreaker(CircuitBreakerSettings circuitBreakerSettings = null)
+        public CircuitBreaker(CircuitBreakerSettings settings = null)
         {
-            circuitBreakerSettings = circuitBreakerSettings ?? CircuitBreakerSettings.DefaultCircuitBreakerSettings;
+            settings = settings ?? CircuitBreakerSettings.DefaultCircuitBreakerSettings;
+            isEnabled = settings.IsEnabled;
 
             circuitbreakerPolicy = Policy
             .Handle<Exception>()
             .AdvancedCircuitBreakerAsync(
-                failureThreshold: circuitBreakerSettings.FailureThreshhold,
-                samplingDuration: TimeSpan.FromMilliseconds(circuitBreakerSettings.SamplingDurationMiliseconds),
-                minimumThroughput: circuitBreakerSettings.MinimumThroughput,
-                durationOfBreak: TimeSpan.FromMilliseconds(circuitBreakerSettings.DurationMiliseconds),
+                failureThreshold: settings.FailureThreshhold,
+                samplingDuration: TimeSpan.FromMilliseconds(settings.SamplingDurationMiliseconds),
+                minimumThroughput: settings.MinimumThroughput,
+                durationOfBreak: TimeSpan.FromMilliseconds(settings.DurationMiliseconds),
                 onBreak: (ex, ts) => { Console.WriteLine("Broken"); },
                 onReset: () => { }
             );
@@ -28,6 +29,11 @@ namespace ResilientCommand
 
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
+            if (!isEnabled)
+            {
+                return await innerAction(cancellationToken);
+            }
+
             return await circuitbreakerPolicy.ExecuteAsync(innerAction, cancellationToken);
         }
     }

@@ -13,6 +13,8 @@
             this.key = key;
         }
 
+        public string Key => key;
+
         public override bool Equals(object obj)
         {
             return Equals(obj as CommandKey);
