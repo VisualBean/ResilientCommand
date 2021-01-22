@@ -53,8 +53,8 @@ namespace ResilientCommand
             {                
                 await semaphore.WaitAsync();
 
-                var task = timeout.ExecuteAsync(RunAsync, cancellationToken);
-                result = await circuitBreaker.ExecuteAsync((ct) => task, cancellationToken);
+                var timeoutTask = executionTimeout.ExecuteAsync(RunAsync, cancellationToken);
+                result = await circuitBreaker.ExecuteAsync((ct) => timeoutTask, cancellationToken);
 
                 if (IsCachedResponseEnabled)
                 {
