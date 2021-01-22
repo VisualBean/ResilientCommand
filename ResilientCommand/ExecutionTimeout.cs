@@ -28,7 +28,7 @@ namespace ResilientCommand
             }
 
             var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            tokenSource.CancelAfter(timeoutInMiliseconds + 100);
+            tokenSource.CancelAfter(timeoutInMiliseconds);
 
             var runTask = innerAction(tokenSource.Token);
             if (await Task.WhenAny(runTask, Task.Delay(timeoutInMiliseconds)) == runTask)
