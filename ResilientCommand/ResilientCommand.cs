@@ -21,10 +21,36 @@ namespace ResilientCommand
 
             this.configuration = configuration ?? CommandConfiguration.CreateConfiguration();
 
-            circuitBreaker = CircuitBreakerFactory.Instance.GetOrCreateCircuitBreaker(commandKey, this.configuration.CircuitBreakerSettings);
-            executionTimeout = new ExecutionTimeout(this.configuration.ExecutionTimeoutSettings);
-            semaphore = SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
+            circuitBreaker = initCircuitBreaker();
+            executionTimeout = initExecutionTimeout();
+            semaphore = initSemaphore();
+            
 
+        }
+
+        private SemaphoreSlim initSemaphore()
+        {
+            return SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
+        }
+
+        private ExecutionTimeout initExecutionTimeout()
+        {
+            if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
+            {
+                return new ExecutionTimeout(this.configuration.ExecutionTimeoutSettings);
+            }
+
+            return null;
+        }
+
+        private CircuitBreaker initCircuitBreaker()
+        {
+            if (this.configuration.CircuitBreakerSettings.IsEnabled)
+            {
+                return CircuitBreakerFactory.Instance.GetOrCreateCircuitBreaker(commandKey, this.configuration.CircuitBreakerSettings);  
+            }
+
+            return null;
         }
 
         public abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
@@ -43,18 +69,18 @@ namespace ResilientCommand
         public async Task<TResult> ExecuteAsync(CancellationToken cancellationToken)
         {
             string cacheKey = $"{commandKey}_{GetCacheKey()}";
-            
-            if (IsCachedResponseEnabled && resultCache.TryGetValue(cacheKey, out TResult result))
+
+            TResult result;
+            if (IsCachedResponseEnabled && resultCache.TryGetValue(cacheKey, out result))
             {
                 return result;
             }
 
             try
-            {                
+            {
                 await semaphore.WaitAsync();
-
-                var timeoutTask = executionTimeout.ExecuteAsync(RunAsync, cancellationToken);
-                result = await circuitBreaker.ExecuteAsync((ct) => timeoutTask, cancellationToken);
+                
+                result = await WrappedExecution(cancellationToken);
 
                 if (IsCachedResponseEnabled)
                 {
@@ -77,6 +103,25 @@ namespace ResilientCommand
             {
                 semaphore.Release();
             }
+        }
+
+        private async Task<TResult> WrappedExecution(CancellationToken cancellationToken)
+        {
+            Task<TResult> timeoutTask = null;
+            if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
+            {
+                timeoutTask = executionTimeout.ExecuteAsync(RunAsync, cancellationToken);
+            }
+
+            Task<TResult> circuitBreakerTask = null;
+            if (this.configuration.CircuitBreakerSettings.IsEnabled)
+            {
+                circuitBreakerTask = circuitBreaker.ExecuteAsync((ct) => timeoutTask ?? RunAsync(ct), cancellationToken);
+            }
+
+            Task<TResult> resultTask = circuitBreakerTask ?? RunAsync(cancellationToken);
+
+            return await resultTask;
         }
     }
 }

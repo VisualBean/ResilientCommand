@@ -7,11 +7,9 @@ namespace ResilientCommand
     internal class ExecutionTimeout : IExecutionStrategy
     {
         private readonly int timeoutInMiliseconds;
-        private bool isEnabled;
         public ExecutionTimeout(ExecutionTimeoutSettings settings = null)
         {
             settings = settings ?? ExecutionTimeoutSettings.DefaultExecutionTimeoutSettings;
-            isEnabled = settings.IsEnabled;
 
             if (settings.ExecutionTimeoutInMiliseconds < 0)
             {
@@ -22,11 +20,6 @@ namespace ResilientCommand
         }
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
-            if (!isEnabled)
-            {
-                return await innerAction(cancellationToken);
-            }
-
             var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             tokenSource.CancelAfter(timeoutInMiliseconds);
 

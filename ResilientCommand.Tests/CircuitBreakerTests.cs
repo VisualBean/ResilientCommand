@@ -53,7 +53,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(AggregateException))]
+        [ExpectedException(typeof(TestException))]
         public async Task CircuitBreaker_InSameGroupWithFailuresWithDisabledCircuit_DoesNotTripCircuit()
         {
             var groupId = Guid.NewGuid().ToString();
