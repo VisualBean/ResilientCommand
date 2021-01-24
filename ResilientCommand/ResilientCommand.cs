@@ -36,7 +36,7 @@ namespace ResilientCommand
             TResult result;
             if (IsCachedResponseEnabled && resultCache.TryGetValue(cacheKey, out result))
             {
-                this.eventNotifier.markEvent(ResillientCommandEventType.CachedResponseUsed, this.commandKey);
+                this.eventNotifier.markEvent(ResillientCommandEventType.ResponseFromCache, this.commandKey);
                 return result;
             }
 
@@ -53,16 +53,33 @@ namespace ResilientCommand
 
                 return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                switch (ex)
+                {
+                    case Polly.ExecutionRejectedException:
+                        // Dont notify.
+                        break;
+                    default:
+                    this.eventNotifier.markEvent(ResillientCommandEventType.ExceptionThrown, this.commandKey);
+                        break;
+                }
+                
+
                 var fallbackValue = Fallback();
                 if (fallbackValue != null)
                 {
-                    this.eventNotifier.markEvent(ResillientCommandEventType.FallbackUsed, this.commandKey);
+                    this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSuccess, this.commandKey);
                     return fallbackValue;
                 }
 
                 this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSkipped, this.commandKey);
+
+                if (ex is Polly.CircuitBreaker.BrokenCircuitException)
+                { 
+                    throw new CircuitBrokenException(ex.InnerException);
+                }
+
                 throw;
             }
             finally

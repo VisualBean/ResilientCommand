@@ -10,12 +10,13 @@ namespace ResilientCommand
     internal class CircuitBreaker
     {
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
+        public CircuitState State => circuitbreakerPolicy.CircuitState;
         public CircuitBreaker(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CircuitBreakerSettings settings = null)
         {
             settings = settings ?? CircuitBreakerSettings.DefaultCircuitBreakerSettings;
 
             circuitbreakerPolicy = Policy
-            .Handle<Exception>((ex) => { eventNotifier.markEvent(ResillientCommandEventType.ExceptionThrown, commandKey); return true; })
+            .Handle<Exception>()
             .AdvancedCircuitBreakerAsync(
                 failureThreshold: settings.FailureThreshhold,
                 samplingDuration: TimeSpan.FromMilliseconds(settings.SamplingDurationMiliseconds),

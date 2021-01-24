@@ -6,9 +6,9 @@
         TimedOut,
         CircuitBroken,
         CircuitReset,
-        FallbackUsed,
+        FallbackSuccess,
         FallbackSkipped,
         ExceptionThrown,
-        CachedResponseUsed,
+        ResponseFromCache,
     }
 }
