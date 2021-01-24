@@ -1,4 +1,4 @@
-![.NET](https://github.com/VisualBean/ResilientCommand/workflows/.NET/badge.svg)
+![Build](https://github.com/VisualBean/ResilientCommand/workflows/Build/badge.svg)
 
 # ResilientCommand
 A Resiliency library for wrapping dependency calls. Heavily inspired by Hystrix
