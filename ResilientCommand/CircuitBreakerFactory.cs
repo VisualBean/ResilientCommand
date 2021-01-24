@@ -13,11 +13,11 @@ namespace ResilientCommand
 
         private ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>> circuitBreakerByGroup = new ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>>();
 
-        internal static CircuitBreakerFactory Instance => instance.Value;
+        internal static CircuitBreakerFactory GetInstance() => instance.Value;
 
-        internal CircuitBreaker GetOrCreateCircuitBreaker(CommandKey commandKey, CircuitBreakerSettings circuitBreakerSettings)
+        internal CircuitBreaker GetOrCreateCircuitBreaker(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CircuitBreakerSettings circuitBreakerSettings)
         {
-            return circuitBreakerByGroup.GetOrAdd(commandKey, new Lazy<CircuitBreaker>(() => new CircuitBreaker(circuitBreakerSettings))).Value;
+            return circuitBreakerByGroup.GetOrAdd(commandKey, new Lazy<CircuitBreaker>(() => new CircuitBreaker(commandKey, eventNotifier, circuitBreakerSettings))).Value;
         }
     }
 }

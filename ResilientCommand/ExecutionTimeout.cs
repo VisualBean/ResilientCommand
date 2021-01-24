@@ -4,10 +4,13 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand
 {
-    internal class ExecutionTimeout : IExecutionStrategy
+    internal class ExecutionTimeout
     {
         private readonly int timeoutInMiliseconds;
-        public ExecutionTimeout(ExecutionTimeoutSettings settings = null)
+        private readonly CommandKey commandKey;
+        private readonly ResilientCommandEventNotifier eventNotifier;
+
+        public ExecutionTimeout(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, ExecutionTimeoutSettings settings = null)
         {
             settings = settings ?? ExecutionTimeoutSettings.DefaultExecutionTimeoutSettings;
 
@@ -17,6 +20,8 @@ namespace ResilientCommand
             }
            
             this.timeoutInMiliseconds = (int)settings.ExecutionTimeoutInMiliseconds;
+            this.commandKey = commandKey;
+            this.eventNotifier = eventNotifier;
         }
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
@@ -30,6 +35,7 @@ namespace ResilientCommand
             }
             else
             {
+                eventNotifier.markEvent(ResillientCommandEventType.TimedOut, commandKey);
                 throw new TimeoutException("Command timed out.");
             }
         }

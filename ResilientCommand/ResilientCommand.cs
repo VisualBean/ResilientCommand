@@ -7,64 +7,27 @@ namespace ResilientCommand
 {
     public abstract class ResilientCommand<TResult> where TResult : class
     {
-        private readonly ConcurrentDictionary<string, TResult> resultCache = new ConcurrentDictionary<string, TResult>();
         private readonly CircuitBreaker circuitBreaker;
-        private readonly ExecutionTimeout executionTimeout;
-        private readonly SemaphoreSlim semaphore;
         private readonly CommandKey commandKey;
         private readonly CommandConfiguration configuration;
-        private bool IsCachedResponseEnabled => GetCacheKey() != null;
+        private readonly ResilientCommandEventNotifier eventNotifier;
+        private readonly ExecutionTimeout executionTimeout;
+        private readonly ConcurrentDictionary<string, TResult> resultCache = new ConcurrentDictionary<string, TResult>();
+        private readonly SemaphoreSlim semaphore;
 
         public ResilientCommand(CommandKey commandKey = null, CommandConfiguration configuration = null)
         {
             this.commandKey = commandKey ?? new CommandKey(GetType().Name);
-
             this.configuration = configuration ?? CommandConfiguration.CreateConfiguration();
 
-            circuitBreaker = initCircuitBreaker();
-            executionTimeout = initExecutionTimeout();
-            semaphore = initSemaphore();
-            
+            eventNotifier = InitEventNotifier();
+            circuitBreaker = InitCircuitBreaker();
+            executionTimeout = InitExecutionTimeout();
+            semaphore = InitSemaphore();
 
         }
 
-        private SemaphoreSlim initSemaphore()
-        {
-            return SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
-        }
-
-        private ExecutionTimeout initExecutionTimeout()
-        {
-            if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
-            {
-                return new ExecutionTimeout(this.configuration.ExecutionTimeoutSettings);
-            }
-
-            return null;
-        }
-
-        private CircuitBreaker initCircuitBreaker()
-        {
-            if (this.configuration.CircuitBreakerSettings.IsEnabled)
-            {
-                return CircuitBreakerFactory.Instance.GetOrCreateCircuitBreaker(commandKey, this.configuration.CircuitBreakerSettings);  
-            }
-
-            return null;
-        }
-
-        public abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
-
-        public virtual TResult Fallback()
-        {
-            return null;
-        }
-
-
-        public virtual string GetCacheKey()
-        {
-            return null;
-        }
+        private bool IsCachedResponseEnabled => GetCacheKey() != null;
 
         public async Task<TResult> ExecuteAsync(CancellationToken cancellationToken)
         {
@@ -73,14 +36,15 @@ namespace ResilientCommand
             TResult result;
             if (IsCachedResponseEnabled && resultCache.TryGetValue(cacheKey, out result))
             {
+                this.eventNotifier.markEvent(ResillientCommandEventType.CachedResponseUsed, this.commandKey);
                 return result;
             }
 
             try
             {
                 await semaphore.WaitAsync();
-                
-                result = await WrappedExecution(cancellationToken);
+
+                result = await WrappedExecutionAsync(cancellationToken);
 
                 if (IsCachedResponseEnabled)
                 {
@@ -94,18 +58,80 @@ namespace ResilientCommand
                 var fallbackValue = Fallback();
                 if (fallbackValue != null)
                 {
+                    this.eventNotifier.markEvent(ResillientCommandEventType.FallbackUsed, this.commandKey);
                     return fallbackValue;
                 }
 
+                this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSkipped, this.commandKey);
                 throw;
             }
             finally
             {
+
                 semaphore.Release();
             }
         }
 
-        private async Task<TResult> WrappedExecution(CancellationToken cancellationToken)
+        /// <summary>
+        /// Override this to enable fallback.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual TResult Fallback()
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Override this to enable caching.
+        /// The cache will be per <see cref="CommandKey"/>.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetCacheKey()
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Implementation of runAsync. When calling ExecuteAsync, runasync will be called, wrapped in 
+        /// </summary>
+        /// <remarks>
+        /// In order for the CircuitBreaker to work, please re-throw any exceptions
+        /// </remarks>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        protected abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
+
+        private CircuitBreaker InitCircuitBreaker()
+        {
+            if (this.configuration.CircuitBreakerSettings.IsEnabled)
+            {
+                return CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(commandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
+            }
+
+            return null;
+        }
+
+        private ResilientCommandEventNotifier InitEventNotifier()
+        {
+            return EventNotifierFactory.GetInstance().GetEventNotifier();
+        }
+
+        private ExecutionTimeout InitExecutionTimeout()
+        {
+            if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
+            {
+                return new ExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
+            }
+
+            return null;
+        }
+
+        private SemaphoreSlim InitSemaphore()
+        {
+            return SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
+        }
+
+        private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
             Task<TResult> timeoutTask = null;
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
