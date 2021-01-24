@@ -28,10 +28,10 @@ namespace ResilientCommand.Tests
             this.cacheKey = cacheKey;
         }
 
-        public override string GetCacheKey() => cacheKey;
+        protected override string GetCacheKey() => cacheKey;
 
-        public override async Task<string> RunAsync(CancellationToken cancellationToken) => await action(cancellationToken);
+        protected override async Task<string> RunAsync(CancellationToken cancellationToken) => await action(cancellationToken);
 
-        public override string Fallback() => fallbackAction();
+        protected override string Fallback() => fallbackAction();
     }
 }
