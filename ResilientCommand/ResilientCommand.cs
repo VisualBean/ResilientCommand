@@ -92,7 +92,7 @@ namespace ResilientCommand
         }
 
         /// <summary>
-        /// Implementation of runAsync. When calling ExecuteAsync, runasync will be called, wrapped in 
+        /// Task to run as a ResilientCommand.
         /// </summary>
         /// <remarks>
         /// In order for the CircuitBreaker to work, please re-throw any exceptions
@@ -105,7 +105,7 @@ namespace ResilientCommand
         {
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
             {
-                return CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(commandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
+                return CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(this.commandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
             }
 
             return null;
@@ -120,7 +120,7 @@ namespace ResilientCommand
         {
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
             {
-                return new ExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
+                return ExecutionTimeoutFactory.GetInstance().GetOrCreateExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
             }
 
             return null;
