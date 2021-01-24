@@ -34,14 +34,14 @@ namespace ResilientCommand.Tests
             var groupId = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                 async (ct) => { throw new Exception(); },
-                 () => "fallback",
+                 action: async (ct) => { throw new Exception(); },
+                 fallbackAction: () => "fallback",
                  commandKey: groupId,
                  config: circuitBreakerConfigurationLowTimeout);
 
             var command2 = new GenericTestableCommand(
-                 (ct) => { throw new Exception(); },
-                 () => null,
+                 action: (ct) => { throw new Exception(); },
+                 fallbackAction: () => null,
                  commandKey: groupId,
                  config: circuitBreakerConfigurationLowTimeout);
 
@@ -59,14 +59,14 @@ namespace ResilientCommand.Tests
             var groupId = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                 async (ct) => { throw new Exception(); },
-                 () => "fallback",
+                 action: async (ct) => { throw new Exception(); },
+                 fallbackAction: () => "fallback",
                  commandKey: groupId,
                  config: circuitBreakerConfigurationDisabled);
 
             var command2 = new GenericTestableCommand(
-                 (ct) => { throw new TestException(); },
-                 () => null,
+                 action: (ct) => { throw new TestException(); },
+                 fallbackAction: () => null,
                  commandKey: groupId,
                  config: circuitBreakerConfigurationDisabled);
 
@@ -85,14 +85,14 @@ namespace ResilientCommand.Tests
             var groupId2 = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                 async (ct) => { throw new TestException(); },
-                 () => "fallback",
+                 action: async (ct) => { throw new TestException(); },
+                 fallbackAction: () => "fallback",
                  commandKey: groupId,
                  config: circuitBreakerConfigurationLowTimeout);
 
             var command2 = new GenericTestableCommand(
-                 (ct) => { throw new TestException(); },
-                 () => null,
+                 action: (ct) => { throw new TestException(); },
+                 fallbackAction: () => null,
                  commandKey: groupId2,
                  config: circuitBreakerConfigurationHigherTimeout);
 

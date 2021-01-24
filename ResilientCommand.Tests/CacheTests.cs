@@ -17,8 +17,8 @@ namespace ResilientCommand.Tests
             var groupId = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                    async (ct) => { count++; return value; },
-                    () => null,
+                    action: async (ct) => { count++; return value; },
+                    fallbackAction: () => null,
                     cacheKey: "cacheKey",
                     commandKey: groupId);
 
@@ -38,8 +38,8 @@ namespace ResilientCommand.Tests
             var groupId2 = Guid.NewGuid().ToString();
 
             var command = new GenericTestableCommand(
-                    async (ct) => { count++; return value; },
-                    () => null,
+                    action: async (ct) => { count++; return value; },
+                    fallbackAction: () => null,
                     cacheKey: "cacheKey",
                     commandKey: groupId);
 

@@ -22,8 +22,8 @@ namespace ResilientCommand.Tests
         public async Task Timeout_WithoutFallback_ThrowsTimeoutException()
         {
             var command = new GenericTestableCommand(
-                async (ct) => { await Task.Delay(10); return ""; },
-                () => null,
+                action: async (ct) => { await Task.Delay(10); return ""; },
+                fallbackAction: () => null,
                 commandKey: "group1",
                 config: LowTimeout);
             await command.ExecuteAsync(default);
@@ -35,8 +35,8 @@ namespace ResilientCommand.Tests
         {
             string fallbackValue = "fallback";
             var command = new GenericTestableCommand(
-                  async (ct) => { await Task.Delay(10); return ""; },
-                  () => fallbackValue,
+                  action: async (ct) => { await Task.Delay(10); return ""; },
+                  fallbackAction: () => fallbackValue,
                   commandKey: "group1",
                   config: LowTimeout);
             var response = await command.ExecuteAsync(default);
@@ -49,8 +49,8 @@ namespace ResilientCommand.Tests
         public async Task Timeout_WithTimeoutDisabled_NoTimeoutIsExecuted()
         {
             var command = new GenericTestableCommand(
-                async (ct) => { await Task.Delay(10); return ""; },
-                () => null,
+                action: async (ct) => { await Task.Delay(10); return ""; },
+                fallbackAction: () => null,
                 commandKey: "group1",
                 config: DisabledTimeout);
             await command.ExecuteAsync(default);
