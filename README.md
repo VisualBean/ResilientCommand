@@ -9,7 +9,8 @@ The flow is simple
 3. and further wrap that in a semaphore (maxParallelism)
 
 ### Caching
-A cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to fetch the result from that cache.
+A cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to fetch the result from the cache.
+Responses are cached per CommandKey.
 
 ### Fallback
 The fallback can be thought of as a backup value in case of a failure from the dependency.  
