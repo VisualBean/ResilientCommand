@@ -1,4 +1,4 @@
-using Polly;
+﻿using Polly;
 using Polly.CircuitBreaker;
 using System;
 using System.Diagnostics.Tracing;
@@ -10,6 +10,8 @@ namespace ResilientCommand
     internal class CircuitBreaker
     {
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
+        private readonly CommandKey commandKey;
+
         public CircuitState State => circuitbreakerPolicy.CircuitState;
         public CircuitBreaker(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CircuitBreakerSettings settings = null)
         {
@@ -22,17 +24,22 @@ namespace ResilientCommand
                 samplingDuration: TimeSpan.FromMilliseconds(settings.SamplingDurationMiliseconds),
                 minimumThroughput: settings.MinimumThroughput,
                 durationOfBreak: TimeSpan.FromMilliseconds(settings.DurationMiliseconds),
-                onBreak: (ex, ts) => eventNotifier.markEvent(ResillientCommandEventType.CircuitBroken, commandKey),
+                onBreak: (ex, ts) =>
                 {
+                    eventNotifier.MarkEvent(ResillientCommandEventType.CircuitBroken, commandKey);
+                    throw new CircuitBrokenException(this.commandKey, ex);
+                },
                 onReset: () => eventNotifier.MarkEvent(ResillientCommandEventType.CircuitReset, commandKey)
             );
+
+            this.commandKey = commandKey;
         }
 
-        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, Func<TResult> onBrokenCircuit = null, CancellationToken cancellationToken = default)
+        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
         {
-            if (onBrokenCircuit != null && circuitbreakerPolicy.CircuitState == CircuitState.Open)
+            if (circuitbreakerPolicy.CircuitState == CircuitState.Open)
             {
-                return onBrokenCircuit();
+                throw new CircuitBrokenException(this.commandKey);
             }
 
             return await circuitbreakerPolicy.ExecuteAsync(innerAction, cancellationToken);

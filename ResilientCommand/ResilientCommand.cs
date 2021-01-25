@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,16 +55,7 @@ namespace ResilientCommand
             }
             catch (Exception ex)
             {
-                switch (ex)
-                {
-                    case CircuitBrokenException:
-                    case FallbackNotImplementedException:
-                        throw;
-                    default:
-                        break;
-                }
-
-                this.eventNotifier.markEvent(ResillientCommandEventType.ExceptionThrown, this.commandKey);
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.ExceptionThrown, this.commandKey);
 
                 return HandleFallback(ex);
             }
@@ -162,7 +153,6 @@ namespace ResilientCommand
             {
                 circuitBreakerTask = circuitBreaker.ExecuteAsync(
                     innerAction: (ct) => timeoutTask ?? RunAsync(ct), 
-                    onBrokenCircuit: () => HandleFallback(new CircuitBrokenException(this.commandKey)), 
                     cancellationToken);
             }
 
