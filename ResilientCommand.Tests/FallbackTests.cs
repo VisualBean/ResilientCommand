@@ -13,7 +13,7 @@ namespace ResilientCommand.Tests
         class TestNotifier : ResilientCommandEventNotifier
         {
             public List<ResillientCommandEventType> events = new List<ResillientCommandEventType>();
-            public override void markEvent(ResillientCommandEventType eventType, CommandKey commandKey)
+            public override void MarkEvent(ResillientCommandEventType eventType, CommandKey commandKey)
             {
                 events.Add(eventType);
             }
