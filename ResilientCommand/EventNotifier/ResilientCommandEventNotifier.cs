@@ -5,6 +5,6 @@ namespace ResilientCommand
 {
     public abstract class ResilientCommandEventNotifier
     {
-        public abstract void markEvent(ResillientCommandEventType eventType, CommandKey commandKey);
+        public abstract void MarkEvent(ResillientCommandEventType eventType, CommandKey commandKey);
     }
 }

@@ -35,7 +35,7 @@ namespace ResilientCommand
             }
             else
             {
-                eventNotifier.markEvent(ResillientCommandEventType.TimedOut, commandKey);
+                eventNotifier.MarkEvent(ResillientCommandEventType.TimedOut, commandKey);
                 throw new TimeoutException("Command timed out.");
             }
         }

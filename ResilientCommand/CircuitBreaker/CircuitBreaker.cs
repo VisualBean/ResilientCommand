@@ -1,4 +1,4 @@
-﻿using Polly;
+using Polly;
 using Polly.CircuitBreaker;
 using System;
 using System.Diagnostics.Tracing;
@@ -23,7 +23,8 @@ namespace ResilientCommand
                 minimumThroughput: settings.MinimumThroughput,
                 durationOfBreak: TimeSpan.FromMilliseconds(settings.DurationMiliseconds),
                 onBreak: (ex, ts) => eventNotifier.markEvent(ResillientCommandEventType.CircuitBroken, commandKey),
-                onReset: () => eventNotifier.markEvent(ResillientCommandEventType.CircuitReset, commandKey)
+                {
+                onReset: () => eventNotifier.MarkEvent(ResillientCommandEventType.CircuitReset, commandKey)
             );
         }
 
