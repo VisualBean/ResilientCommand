@@ -20,8 +20,77 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
  | Notifications | A somewhat simple event system. | N/A | N/A |
 
 ---
+## Basic usage
+Lets take a basic example.  
+Lets say we run a "IsItUp" service. The idea is that people call you to check whether some website or service is up or down.
+
+``` csharp
+// The IsUpResult class.
+class IsUpResult
+{
+    private readonly string site;
+    private readonly bool isUp;
+
+    public IsUpResult(string site, bool isUp)
+    {
+        this.site = site;
+        this.isUp = isUp;
+    }
+
+    public string Site => this.site;
+
+    public bool IsUp => this.isUp;
+
+    public override int GetHashCode()
+    {
+        return this.site.GetHashCode();
+    }
+
+    public override bool Equals(object obj)
+    {
+        return base.Equals(obj as IsUpResult);
+    }
+
+    public bool Equals(IsUpResult other)
+    {
+        return this.site == other.Site && this.isUp == other.IsUp;
+    }
+
+}
+
+// Our command implementation.
+class IsItUpCommand : ResilientCommand<IsUpResult>
+{
+    private readonly string site;
+    private readonly HttpClient client;
+
+    public IsItUpCommand(string site)
+    {
+        this.site = site;
+        this.client = new HttpClient();
+    }
+
+    protected override async Task<IsUpResult> RunAsync(CancellationToken cancellationToken)
+    {
+        var response = await client.GetAsync(this.site);
+        response.EnsureSuccessStatusCode(); // Throws if non-success.
+
+        return new IsUpResult(this.site, true);
+    }
+
+    protected override IsUpResult Fallback()
+    {
+        return new IsUpResult(this.site, false);
+    }
+}
+```
+
+The above would call the site, and in case of any problems, we would use the fallback as a result instead of throwing exceptions.  
+The above example is ofcourse very trivial, as this could also simply be handled with a try/catch => new IsUpResult(this.site, false);  
+but hopefully the idea comes across.
 
 ## Features
+
 ### CommandKey
 `CommandKey` is a way for the `ResilientCommand` to both cache circuitbreakers, but also helps with cachekeys and groupings in general.  
 
@@ -125,7 +194,7 @@ Configuration is injected in the constructor.
 ``` csharp
 class BasicCommand : ResilientCommand<string>
 {
-    public BasicCachingCommand() : base(
+    public BasicCommand() : base(
         configuration: CommandConfiguration.CreateConfiguration(
             config => 
             {
