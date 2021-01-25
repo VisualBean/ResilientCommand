@@ -92,7 +92,7 @@ _Note: If `Fallback()` has not been overridden nor disabled, the command will th
 CommandConfiguration.CreateConfiguration(
 config => 
 {
-    config.FallbackEnabled = false;
+    config.FallbackEnabled = true;
 });
 ```
 
