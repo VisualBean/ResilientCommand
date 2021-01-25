@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,8 +56,12 @@ namespace ResilientCommand
             }
             catch (Exception ex)
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.Failure, this.commandKey);
-
+                switch (ex)
+                {
+                    default:
+                        this.eventNotifier.MarkEvent(ResillientCommandEventType.Failure, this.commandKey);
+                        break;
+                }
                 return HandleFallback(ex);
             }
             finally
