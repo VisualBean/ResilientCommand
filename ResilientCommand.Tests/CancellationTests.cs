@@ -1,3 +1,4 @@
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading;
@@ -9,7 +10,6 @@ namespace ResilientCommand.Tests
     public class CancellationTests
     {
         [TestMethod]
-        [ExpectedException(typeof(OperationCanceledException))]
         public async Task Command_WithCancelledToken_PropagatesCancellation()
         {
             var groupId = Guid.NewGuid().ToString();
@@ -22,7 +22,16 @@ namespace ResilientCommand.Tests
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
-            await command.ExecuteAsync(cts.Token);
+            try
+            {
+                await command.ExecuteAsync(cts.Token);
+            }
+            catch (Exception ex)
+            {
+                ex.Should().BeOfType(typeof(FallbackNotImplementedException));
+                ex.InnerException.Should().BeOfType(typeof(OperationCanceledException));
+            }
+            
         }
 
     }

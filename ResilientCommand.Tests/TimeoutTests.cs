@@ -12,6 +12,12 @@ namespace ResilientCommand.Tests
             config.ExecutionTimeoutSettings = new ExecutionTimeoutSettings(executionTimeoutInMiliseconds: 1);
         });
 
+        static CommandConfiguration LowTimeoutDisabledFallback = CommandConfiguration.CreateConfiguration(config =>
+        {
+            config.ExecutionTimeoutSettings = new ExecutionTimeoutSettings(executionTimeoutInMiliseconds: 1);
+            config.FallbackEnabled = false;
+        });
+
         static CommandConfiguration DisabledTimeout = CommandConfiguration.CreateConfiguration(config =>
         {
             config.ExecutionTimeoutSettings = new ExecutionTimeoutSettings(isEnabled: false);
@@ -19,13 +25,14 @@ namespace ResilientCommand.Tests
 
         [TestMethod]
         [ExpectedException(typeof(TimeoutException))]
-        public async Task Timeout_WithoutFallback_ThrowsTimeoutException()
+        public async Task Timeout_WithoutDisabledFallback_ThrowsTimeoutException()
         {
             var command = new GenericTestableCommand(
                 action: async (ct) => { await Task.Delay(10); return ""; },
                 fallbackAction: () => null,
                 commandKey: "group1",
-                config: LowTimeout);
+                config: LowTimeoutDisabledFallback);
+
             await command.ExecuteAsync(default);
 
         }

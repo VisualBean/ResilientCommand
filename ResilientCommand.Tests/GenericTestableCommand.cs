@@ -7,7 +7,7 @@ namespace ResilientCommand.Tests
   
     public class GenericTestableCommand : ResilientCommand<string>
     {
-        public static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: 20, minimumThroughput: 2);
+        public static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2);
 
         private readonly Func<CancellationToken, Task<string>> action;
         private readonly Func<string> fallbackAction;
@@ -16,7 +16,7 @@ namespace ResilientCommand.Tests
         public GenericTestableCommand(
                 Func<CancellationToken, Task<string>> action,
                 Func<string> fallbackAction,
-                string commandKey = null,
+                string commandKey = "Cmd1",
                 string cacheKey = null,
                 CommandConfiguration config = null) : base(
             new CommandKey(commandKey),
