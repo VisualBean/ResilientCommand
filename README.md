@@ -86,7 +86,7 @@ class IsItUpCommand : ResilientCommand<IsUpResult>
 ```
 
 The above would call the site, and in case of any problems, we would use the fallback as a result instead of throwing exceptions.  
-The above example is ofcourse very trivial, as this could also simply be handled with a try/catch => new IsUpResult(this.site, false);  
+The above example is ofcourse very trivial, as this could also simply be handled with a `try/catch => new IsUpResult(this.site, false);`
 but hopefully the idea comes across.
 
 ## Features
