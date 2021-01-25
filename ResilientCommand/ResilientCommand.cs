@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -132,7 +132,7 @@ namespace ResilientCommand
         {
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
             {
-                return ExecutionTimeoutFactory.GetInstance().GetOrCreateExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
+                return new ExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
             }
 
             return null;
