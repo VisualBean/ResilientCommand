@@ -8,7 +8,7 @@ namespace something.Examples
     // Create a ResilientCommandEventNotifier implementation.
     public class ConsoleEventNotifier : ResilientCommandEventNotifier
     {
-        public override void markEvent(ResillientCommandEventType eventType, CommandKey commandKey)
+        public override void MarkEvent(ResillientCommandEventType eventType, CommandKey commandKey)
         {
             Console.WriteLine($"{commandKey}: {eventType}");
         }
@@ -39,7 +39,8 @@ namespace something.Examples
                 MySuperCommand: ExceptionThrown
                 MySuperCommand: FallbackSuccess
 
-            3: Third call, goes directly to the fallback.
+            3: Third call, skips the circuit logic due to it being open and goes directly to the fallback.
+                MySuperCommand: ExceptionThrown
                 MySuperCommand: FallbackSuccess
             */
         }
