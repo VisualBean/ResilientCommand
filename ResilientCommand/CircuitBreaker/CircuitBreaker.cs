@@ -1,7 +1,6 @@
 ﻿using Polly;
 using Polly.CircuitBreaker;
 using System;
-using System.Diagnostics.Tracing;
 using System.Threading;
 using System.Threading.Tasks;
 

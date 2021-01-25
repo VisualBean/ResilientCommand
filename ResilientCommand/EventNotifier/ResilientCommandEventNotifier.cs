@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace ResilientCommand
+﻿namespace ResilientCommand
 {
     public abstract class ResilientCommandEventNotifier
     {
