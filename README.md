@@ -20,7 +20,7 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
  | Notifications | A somewhat simple event system. | N/A | N/A |
 
 ---
-## Basic usage
+# Basic usage
 Lets take a basic example.  
 Lets say we run a "IsItUp" service. The idea is that people call you to check whether some website or service is up or down.
 
@@ -89,29 +89,27 @@ The above would call the site, and in case of any problems, we would use the fal
 The above example is ofcourse very trivial, as this could also simply be handled with a `try/catch => new IsUpResult(this.site, false);`
 but hopefully the idea comes across.
 
-## Features
----
+# Features
 
-### CommandKey
----
+## CommandKey
+
 `CommandKey` is a way for the `ResilientCommand` to both cache circuitbreakers, but also helps with cachekeys and groupings in general.  
 
 _Note: If no `CommandKey` is supplied, it defaults to `GetType().Name` which is the inheriting class' name._
 
-### Caching
----
+## Caching
 
 the response cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to `ExecuteAsync()` to get the result from the cache.
 
 _Note: Responses are cached per `CommandKey`._
 
-### Semaphore
----
+## Semaphore
+
 The semaphore enables us to limit the amount of parallisme that command can have at any given point.  
 The semaphore is controlled through the `MaxParallelism` integer in `CommandConfiguration`.  
 _Note: Semaphores work per `CommandKey`._  
 
-#### Configuration - defaults
+### Configuration - defaults
 ``` csharp
 CommandConfiguration.CreateConfiguration(
 config =>
@@ -120,12 +118,11 @@ config =>
 });
 ```
 
-### Timeout
----
+## Timeout
 
 The timeout makes sure to cancel the current execution if we pass the timeout limit.  
 
-#### Configuration - defaults
+### Configuration - defaults
 ``` csharp
 CommandConfiguration.CreateConfiguration(
 config =>
@@ -136,12 +133,11 @@ config =>
 });
 ```
 
-### CircuitBreaker
----
+## CircuitBreaker
 
 The circuit breaker works by looking at a rolling window of errors, and if we get above the configured `failureThreshold` we open the circuit for `durationMiliseconds` until we allow to try again.
 
-#### Configuration - defaults
+### Configuration - defaults
 ```csharp
 CommandConfiguration.CreateConfiguration(
 config =>
@@ -155,8 +151,7 @@ config =>
 });
 ```
 
-### Fallback
----
+## Fallback
 
 The fallback can be thought of as a backup value in case of a failure from the dependency.    
 The idea is that the fallback will be returned and exceptions swallowed, not causing an outage.  
@@ -167,7 +162,7 @@ Fallback can be disabled through configuration. If disabled, exceptions will fal
 
 _Note: If `Fallback()` has not been overridden nor disabled, the command will throw a `FallbackNotImplementedException` exception._  
 
-#### Configuration - defaults
+### Configuration - defaults
 ``` csharp 
 CommandConfiguration.CreateConfiguration(
 config => 
@@ -176,13 +171,13 @@ config =>
 });
 ```
 
-### ResilientCommandNotifier
----
+## ResilientCommandNotifier
+
 
 `ResilientCommandNotifier` is a way to keep tabs on which events has been run as part of the current execution.  
 The notifier is set through the singleton factory `EventNotifierFactory`. Only a single notifier is currently supported at a time.
 
-#### Example
+### Example
 ``` csharp
 public class ConsoleEventNotifier : ResilientCommandEventNotifier
 {
@@ -199,13 +194,12 @@ EventNotifierFactory.GetInstance().SetEventNotifier(new ConsoleEventNotifier());
 ```
 _Note: The default implementation doesnt do anything. You will have to create a new implementation and set the notifier_
 
-### Configuration
----
+## Configuration
 
 Most features can be configured and/or disabled through the configuration.  
 Configuration is injected in the constructor.
 
-#### Example
+### Example
 ``` csharp
 class BasicCommand : ResilientCommand<string>
 {
@@ -225,7 +219,6 @@ class BasicCommand : ResilientCommand<string>
 }
 ```
 
-### Examples
----
+## Examples
 
 Please checkout the [examples](https://github.com/VisualBean/ResilientCommand/tree/main/ResilientCommand.Example) for basic usage.
