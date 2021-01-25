@@ -6,19 +6,6 @@ A Resiliency library for wrapping dependency calls. Heavily inspired by Hystrix
 The idea is simple; protect against up/down- stream problems, by encapsulating calls to these dependencies in reliability patterns.
 This project seeks to do just that. 
 
-Out of the box, all concrete `ResilientCommand`s have timeout and circuit breakers enabled, with 'somewhat' sane defaults.
-## Currently supported:
-
- |Feature | Description| can be disabled | Can be configured |
- |-------|-----------|----------------|------------------|
- | Timeout | If a command runs longer than x, we cancel it. | true | true |
- | CircuitBreaker | Rolling window of errors, if circuit is broken we resort to fallback. | true | true |
- | Fallback | A default value to return if the command fails. | true | true |
- | Semaphore | A way of minimising max parallelism per command. | false | true |
- | Response Caching | Cache the result based on `CacheKey`. | true | false |
- | Grouping | Commands are grouped based on `CommandKey`. | true | false | 
- | Notifications | A somewhat simple event system. | N/A | N/A |
-
 ---
 # Basic usage
 Lets take a basic example.  
@@ -90,6 +77,20 @@ The above example is ofcourse very trivial, as this could also simply be handled
 but hopefully the idea comes across.
 
 # Features
+
+Out of the box, all concrete `ResilientCommand`s have timeout and circuit breakers enabled, with 'somewhat' sane defaults.
+## Currently supported:
+
+ |Feature | Description| can be disabled | Can be configured |
+ |-------|-----------|----------------|------------------|
+ | Timeout | If a command runs longer than x, we cancel it. | true | true |
+ | CircuitBreaker | Rolling window of errors, if circuit is broken we resort to fallback. | true | true |
+ | Fallback | A default value to return if the command fails. | true | true |
+ | Semaphore | A way of minimising max parallelism per command. | false | true |
+ | Response Caching | Cache the result based on `CacheKey`. | true | false |
+ | Grouping | Commands are grouped based on `CommandKey`. | true | false | 
+ | Notifications | A somewhat simple event system. | N/A | N/A |
+
 
 ## CommandKey
 
