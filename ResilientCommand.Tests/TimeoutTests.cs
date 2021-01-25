@@ -30,7 +30,6 @@ namespace ResilientCommand.Tests
             var command = new GenericTestableCommand(
                 action: async (ct) => { await Task.Delay(10); return ""; },
                 fallbackAction: () => null,
-                commandKey: "group1",
                 config: LowTimeoutDisabledFallback);
 
             await command.ExecuteAsync(default);
@@ -44,7 +43,6 @@ namespace ResilientCommand.Tests
             var command = new GenericTestableCommand(
                   action: async (ct) => { await Task.Delay(10); return ""; },
                   fallbackAction: () => fallbackValue,
-                  commandKey: "group1",
                   config: LowTimeout);
             var response = await command.ExecuteAsync(default);
 
@@ -58,7 +56,6 @@ namespace ResilientCommand.Tests
             var command = new GenericTestableCommand(
                 action: async (ct) => { await Task.Delay(10); return ""; },
                 fallbackAction: () => null,
-                commandKey: "group1",
                 config: DisabledTimeout);
             await command.ExecuteAsync(default);
         }

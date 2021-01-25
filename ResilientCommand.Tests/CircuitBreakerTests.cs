@@ -30,18 +30,18 @@ namespace ResilientCommand.Tests
 
         public async Task CircuitBreaker_InSameGroupWithFailures_ThrowsBrokenCircuit()
         {
-            var groupId = Guid.NewGuid().ToString();
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
 
             var command = new GenericTestableCommand(
                  action: async (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
-                 commandKey: groupId,
+                 commandKey: cmdKey,
                  config: circuitBreakerConfiguration);
 
             var command2 = new GenericTestableCommand(
                  action: (ct) => { throw new TestException(); },
                  fallbackAction: () => null,
-                 commandKey: groupId,
+                 commandKey: cmdKey,
                  config: circuitBreakerConfiguration);
 
             await command.ExecuteAsync(default);
@@ -63,18 +63,18 @@ namespace ResilientCommand.Tests
         [ExpectedException(typeof(TestException))]
         public async Task CircuitBreaker_InSameGroupWithFailuresWithDisabledCircuit_DoesNotTripCircuit()
         {
-            var groupId = Guid.NewGuid().ToString();
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
 
             var command = new GenericTestableCommand(
                  action: async (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
-                 commandKey: groupId,
+                 commandKey: cmdKey,
                  config: circuitBreakerConfigurationDisabled);
 
             var command2 = new GenericTestableCommand(
                  action: (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
-                 commandKey: groupId,
+                 commandKey: cmdKey,
                  config: circuitBreakerConfigurationDisabled);
 
             await command.ExecuteAsync(default);
@@ -87,19 +87,19 @@ namespace ResilientCommand.Tests
         [TestMethod]
         public async Task CircuitBreaker_InDifferentGroupWithFailures_DoesNotThrow()
         {
-            var groupId = Guid.NewGuid().ToString();
-            var groupId2 = Guid.NewGuid().ToString();
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var cmdKey2 = new CommandKey(Guid.NewGuid().ToString());
 
             var command = new GenericTestableCommand(
                  action: async (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
-                 commandKey: groupId,
+                 commandKey: cmdKey,
                  config: circuitBreakerConfiguration);
 
             var command2 = new GenericTestableCommand(
                  action: (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
-                 commandKey: groupId2,
+                 commandKey: cmdKey2,
                  config: circuitBreakerConfigurationHigherTimeout);
 
             await command.ExecuteAsync(default);

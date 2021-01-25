@@ -12,12 +12,12 @@ namespace ResilientCommand.Tests
         [TestMethod]
         public async Task Command_WithCancelledToken_PropagatesCancellation()
         {
-            var groupId = Guid.NewGuid().ToString();
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
 
             var command = new GenericTestableCommand(
                     async (ct) => { ct.ThrowIfCancellationRequested(); return ""; },
                     () => null,
-                    commandKey: groupId);
+                    commandKey: cmdKey);
 
             var cts = new CancellationTokenSource();
             cts.Cancel();

@@ -1,23 +1,14 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
 {
     [TestClass]
-    public class FallbackTests
+    public partial class FallbackTests
     {
-        class TestNotifier : ResilientCommandEventNotifier
-        {
-            public List<ResillientCommandEventType> events = new List<ResillientCommandEventType>();
-            public override void MarkEvent(ResillientCommandEventType eventType, CommandKey commandKey)
-            {
-                events.Add(eventType);
-            }
-        }
         public FallbackTests()
         {
              EventNotifierFactory.GetInstance().SetEventNotifier(new TestNotifier());
@@ -28,9 +19,9 @@ namespace ResilientCommand.Tests
         {
 
             var notifier = EventNotifierFactory.GetInstance().GetEventNotifier() as TestNotifier;
-            var commandKey = Guid.NewGuid().ToString();
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
             var command = new GenericTestableCommand(
-                commandKey: commandKey,
+                commandKey: cmdKey,
                 action: async (ct) => { throw new TestException(); },
                 fallbackAction: () => "fallback",
                 config: CommandConfiguration.CreateConfiguration(config => 
@@ -48,7 +39,7 @@ namespace ResilientCommand.Tests
                 ex.InnerException.Should().BeOfType(typeof(TestException));
             }
             
-            notifier.events.Should().ContainInOrder(ResillientCommandEventType.ExceptionThrown, ResillientCommandEventType.FallbackSkipped);
+            notifier.events[cmdKey].Should().ContainInOrder(ResillientCommandEventType.Failure, ResillientCommandEventType.FallbackSkipped);
         }
 
         [TestMethod]

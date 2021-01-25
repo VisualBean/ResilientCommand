@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,11 +51,12 @@ namespace ResilientCommand
                     resultCache.TryAdd(cacheKey, result);
                 }
 
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.Success, commandKey);
                 return result;
             }
             catch (Exception ex)
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.ExceptionThrown, this.commandKey);
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.Failure, this.commandKey);
 
                 return HandleFallback(ex);
             }
@@ -108,6 +109,7 @@ namespace ResilientCommand
                 return fallbackValue;
             }
 
+            this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
             throw new FallbackNotImplementedException(this.commandKey, innerException);
         }
 

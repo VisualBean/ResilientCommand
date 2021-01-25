@@ -31,16 +31,16 @@ namespace something.Examples
 
             /* Output: 
             1: First call.
-                MySuperCommand: ExceptionThrown
+                MySuperCommand: Failure
                 MySuperCommand: FallbackSuccess
                 
             2: Second call, trips the circuit.
                 MySuperCommand: CircuitBroken
-                MySuperCommand: ExceptionThrown
+                MySuperCommand: Failure
                 MySuperCommand: FallbackSuccess
 
             3: Third call, skips the circuit logic due to it being open and goes directly to the fallback.
-                MySuperCommand: ExceptionThrown
+                MySuperCommand: Failure
                 MySuperCommand: FallbackSuccess
             */
         }
