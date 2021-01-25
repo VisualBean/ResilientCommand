@@ -13,7 +13,7 @@ namespace ResilientCommand.Tests
         });
 
         static CommandConfiguration LowTimeout = CommandConfiguration.CreateConfiguration(config =>
-                {
+        {
             config.ExecutionTimeoutSettings = new ExecutionTimeoutSettings(executionTimeoutInMiliseconds: 1);
         });
 
@@ -39,7 +39,7 @@ namespace ResilientCommand.Tests
 
         [TestMethod]
         [ExpectedException(typeof(TimeoutException))]
-        public async Task Timeout_WithoutDisabledFallback_ThrowsTimeoutException()
+        public async Task Timeout_WithDisabledFallback_ThrowsTimeoutException()
         {
             var command = new GenericTestableCommand(
                 action: async (ct) => { await Task.Delay(10); return ""; },
