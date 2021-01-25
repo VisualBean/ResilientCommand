@@ -57,34 +57,19 @@ namespace ResilientCommand
             {
                 switch (ex)
                 {
-                    case Polly.ExecutionRejectedException:
-                        // Dont notify.
-                        break;
+                    case CircuitBrokenException:
+                    case FallbackNotImplementedException:
+                        throw;
                     default:
-                    this.eventNotifier.markEvent(ResillientCommandEventType.ExceptionThrown, this.commandKey);
                         break;
                 }
-                
 
-                var fallbackValue = Fallback();
-                if (fallbackValue != null)
-                {
-                    this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSuccess, this.commandKey);
-                    return fallbackValue;
-                }
+                this.eventNotifier.markEvent(ResillientCommandEventType.ExceptionThrown, this.commandKey);
 
-                this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSkipped, this.commandKey);
-
-                if (ex is Polly.CircuitBreaker.BrokenCircuitException)
-                { 
-                    throw new CircuitBrokenException(ex.InnerException);
-                }
-
-                throw;
+                return HandleFallback(ex);
             }
             finally
             {
-
                 semaphore.Release();
             }
         }
@@ -118,6 +103,22 @@ namespace ResilientCommand
         /// <returns></returns>
         protected abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
 
+        private TResult HandleFallback(Exception innerException)
+        {
+            if (!this.configuration.FallbackEnabled)
+            {
+                this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSkipped, this.commandKey);
+                throw innerException;
+            }
+            var fallbackValue = Fallback();
+            if (fallbackValue != null)
+            {
+                this.eventNotifier.markEvent(ResillientCommandEventType.FallbackSuccess, this.commandKey);
+                return fallbackValue;
+            }
+
+            throw new FallbackNotImplementedException(this.commandKey, innerException);
+        }
         private CircuitBreaker InitCircuitBreaker()
         {
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
@@ -159,7 +160,10 @@ namespace ResilientCommand
             Task<TResult> circuitBreakerTask = null;
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
             {
-                circuitBreakerTask = circuitBreaker.ExecuteAsync((ct) => timeoutTask ?? RunAsync(ct), cancellationToken);
+                circuitBreakerTask = circuitBreaker.ExecuteAsync(
+                    innerAction: (ct) => timeoutTask ?? RunAsync(ct), 
+                    onBrokenCircuit: () => HandleFallback(new CircuitBrokenException(this.commandKey)), 
+                    cancellationToken);
             }
 
             Task<TResult> resultTask = circuitBreakerTask ?? RunAsync(cancellationToken);

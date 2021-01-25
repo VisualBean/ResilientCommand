@@ -27,8 +27,13 @@ namespace ResilientCommand
             );
         }
 
-        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
+        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, Func<TResult> onBrokenCircuit = null, CancellationToken cancellationToken = default)
         {
+            if (onBrokenCircuit != null && circuitbreakerPolicy.CircuitState == CircuitState.Open)
+            {
+                return onBrokenCircuit();
+            }
+
             return await circuitbreakerPolicy.ExecuteAsync(innerAction, cancellationToken);
         }
     }
