@@ -38,7 +38,7 @@ The semaphore is controlled through the `MaxParallelism` integer in `CommandConf
 _Note: Semaphores work per `CommandKey`._  
 
 #### Configuration - defaults
-``` csharhp
+``` csharp
 CommandConfiguration.CreateConfiguration(
 config =>
 {
@@ -50,7 +50,7 @@ config =>
 The timeout makes sure to cancel the current execution if we pass the timeout limit.  
 
 #### Configuration - defaults
-``` csharhp
+``` csharp
 CommandConfiguration.CreateConfiguration(
 config =>
 {
@@ -88,7 +88,7 @@ Fallback can be disabled through configuration. If disabled, exceptions will fal
 _Note: If `Fallback()` has not been overridden nor disabled, the command will throw a `FallbackNotImplementedException` exception._  
 
 #### Configuration - defaults
-``` csharhp 
+``` csharp 
 CommandConfiguration.CreateConfiguration(
 config => 
 {
