@@ -18,6 +18,7 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
  | Response Caching | Cache the result based on `CacheKey`. |
  | Grouping | Commands are grouped based on `CommandKey`. | 
  | Notifications | A somewhat simple event system. |
+
 ---
 
 ## Features
