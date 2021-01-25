@@ -24,7 +24,6 @@ namespace ResilientCommand
             circuitBreaker = InitCircuitBreaker();
             executionTimeout = InitExecutionTimeout();
             semaphore = InitSemaphore();
-
         }
 
         private bool IsCachedResponseEnabled => GetCacheKey() != null;
@@ -62,6 +61,7 @@ namespace ResilientCommand
                         this.eventNotifier.MarkEvent(ResillientCommandEventType.Failure, this.commandKey);
                         break;
                 }
+                
                 return HandleFallback(ex);
             }
             finally

@@ -10,37 +10,6 @@ namespace ResilientCommand.Tests
     {
         private TestNotifier notifier;
 
-        [TestInitialize]
-        public void init()
-        {
-            EventNotifierFactory.GetInstance().SetEventNotifier(new TestNotifier());
-            this.notifier = EventNotifierFactory.GetInstance().GetEventNotifier() as TestNotifier;
-        }
-
-        [TestMethod]
-        public async Task Command_Withfallback_FallbackIsNotCached()
-        {
-            var fallbackValue = "Fallback";
-
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-
-            var command = new GenericTestableCommand(
-                    action: (ct) => throw new TestException(),
-                    fallbackAction: () => fallbackValue,
-                    cacheKey: "cacheKey",
-                    commandKey: cmdKey);
-
-            await command.ExecuteAsync(default);
-            var response = await command.ExecuteAsync(default);
-            var response2 = await command.ExecuteAsync(default);
-
-            response.Should().Be(fallbackValue);
-            response2.Should().Be(fallbackValue);
-
-            notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.Failure);
-            notifier.events[cmdKey].Should().NotContain(ResillientCommandEventType.ResponseFromCache);
-        }
-
         [TestMethod]
         public async Task Command_WithCacheKey_ReturnsCachedResult()
         {
@@ -95,6 +64,37 @@ namespace ResilientCommand.Tests
 
             notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.ResponseFromCache);
             notifier.events[cmdKey2].Should().NotContain(ResillientCommandEventType.ResponseFromCache);
+        }
+
+        [TestMethod]
+        public async Task Command_Withfallback_FallbackIsNotCached()
+        {
+            var fallbackValue = "Fallback";
+
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+
+            var command = new GenericTestableCommand(
+                    action: (ct) => throw new TestException(),
+                    fallbackAction: () => fallbackValue,
+                    cacheKey: "cacheKey",
+                    commandKey: cmdKey);
+
+            await command.ExecuteAsync(default);
+            var response = await command.ExecuteAsync(default);
+            var response2 = await command.ExecuteAsync(default);
+
+            response.Should().Be(fallbackValue);
+            response2.Should().Be(fallbackValue);
+
+            notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.Failure);
+            notifier.events[cmdKey].Should().NotContain(ResillientCommandEventType.ResponseFromCache);
+        }
+
+        [TestInitialize]
+        public void init()
+        {
+            EventNotifierFactory.GetInstance().SetEventNotifier(new TestNotifier());
+            this.notifier = EventNotifierFactory.GetInstance().GetEventNotifier() as TestNotifier;
         }
     }
 }

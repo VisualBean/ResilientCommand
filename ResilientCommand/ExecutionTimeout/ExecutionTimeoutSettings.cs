@@ -10,15 +10,13 @@
             ExecutionTimeoutInMiliseconds = executionTimeoutInMiliseconds;
         }
 
-        public bool IsEnabled { get; private set; }
+        public static ExecutionTimeoutSettings DefaultExecutionTimeoutSettings => new ExecutionTimeoutSettings();
         public int ExecutionTimeoutInMiliseconds { get; private set; }
-
+        public bool IsEnabled { get; private set; }
         public sealed class Default
         {
-            public const bool IsEnabled = true;
             public const int ExecutionTimeoutInMiliseconds = 10000;
+            public const bool IsEnabled = true;
         }
-
-        public static ExecutionTimeoutSettings DefaultExecutionTimeoutSettings => new ExecutionTimeoutSettings();
     }
 }

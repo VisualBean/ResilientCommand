@@ -51,15 +51,15 @@ namespace ResilientCommand.Examples
         }))
         {
         }
-        protected override Task<string> RunAsync(CancellationToken cancellationToken)
-        {
-            throw new Exception();
-        }
-
         // Enabled fallback.
         protected override string Fallback()
         {
             return "A fallback response";
+        }
+
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            throw new Exception();
         }
     }
 }

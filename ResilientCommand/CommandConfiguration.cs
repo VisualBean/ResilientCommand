@@ -6,6 +6,10 @@ namespace ResilientCommand
 {
     public class CommandConfiguration
     {
+        private CommandConfiguration()
+        {
+        }
+
         public CircuitBreakerSettings CircuitBreakerSettings { get; set; } = DefaultCircuitBreakerSettings;
 
         public ExecutionTimeoutSettings ExecutionTimeoutSettings { get; set; } = DefaultExecutionTimeoutSettings;
@@ -33,10 +37,6 @@ namespace ResilientCommand
             var commandConfiguration = new CommandConfiguration();
             configurationFactory(commandConfiguration);
             return commandConfiguration;
-        }
-
-        private CommandConfiguration()
-        {
         }
     }
 }

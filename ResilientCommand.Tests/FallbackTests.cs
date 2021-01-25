@@ -42,29 +42,6 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        public async Task Fallback_WithNotImplementedFallback_ShouldThrow()
-        {
-            var command = new GenericTestableCommand(
-                action: (ct) => { throw new TestException(); },
-                fallbackAction: () => null,
-                config: CommandConfiguration.CreateConfiguration(config =>
-                {
-                    config.FallbackEnabled = true;
-                }));
-
-            try
-            {
-                await command.ExecuteAsync(default);
-            }
-            catch (Exception ex)
-            {
-                ex.Should().BeOfType(typeof(FallbackNotImplementedException));
-                ex.InnerException.Should().BeOfType(typeof(AggregateException));
-                ex.InnerException.InnerException.Should().BeOfType(typeof(TestException));
-            }
-        }
-
-        [TestMethod]
         public async Task Fallback_WithFallback_ShouldReturnFallback()
         {
             var fallbackValue = "fallback";
@@ -97,6 +74,29 @@ namespace ResilientCommand.Tests
             var result = await command.ExecuteAsync(default);
 
             result.Should().Be(responseValue);
+        }
+
+        [TestMethod]
+        public async Task Fallback_WithNotImplementedFallback_ShouldThrow()
+        {
+            var command = new GenericTestableCommand(
+                action: (ct) => { throw new TestException(); },
+                fallbackAction: () => null,
+                config: CommandConfiguration.CreateConfiguration(config =>
+                {
+                    config.FallbackEnabled = true;
+                }));
+
+            try
+            {
+                await command.ExecuteAsync(default);
+            }
+            catch (Exception ex)
+            {
+                ex.Should().BeOfType(typeof(FallbackNotImplementedException));
+                ex.InnerException.Should().BeOfType(typeof(AggregateException));
+                ex.InnerException.InnerException.Should().BeOfType(typeof(TestException));
+            }
         }
     }
 }

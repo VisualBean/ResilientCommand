@@ -10,8 +10,8 @@ namespace ResilientCommand.Tests
         public static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2);
 
         private readonly Func<CancellationToken, Task<string>> action;
-        private readonly Func<string> fallbackAction;
         private readonly string cacheKey;
+        private readonly Func<string> fallbackAction;
 
         public GenericTestableCommand(
                 Func<CancellationToken, Task<string>> action,
@@ -28,10 +28,10 @@ namespace ResilientCommand.Tests
             this.cacheKey = cacheKey;
         }
 
+        protected override string Fallback() => fallbackAction();
+
         protected override string GetCacheKey() => cacheKey;
 
         protected override async Task<string> RunAsync(CancellationToken cancellationToken) => await action(cancellationToken);
-
-        protected override string Fallback() => fallbackAction();
     }
 }

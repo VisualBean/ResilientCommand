@@ -6,10 +6,9 @@ namespace ResilientCommand
 {
     internal class ExecutionTimeout
     {
-        private readonly int timeoutInMiliseconds;
         private readonly CommandKey commandKey;
         private readonly ResilientCommandEventNotifier eventNotifier;
-
+        private readonly int timeoutInMiliseconds;
         public ExecutionTimeout(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, ExecutionTimeoutSettings settings = null)
         {
             settings = settings ?? ExecutionTimeoutSettings.DefaultExecutionTimeoutSettings;

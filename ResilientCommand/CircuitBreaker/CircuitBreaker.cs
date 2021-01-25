@@ -11,7 +11,6 @@ namespace ResilientCommand
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
         private readonly CommandKey commandKey;
 
-        public CircuitState State => circuitbreakerPolicy.CircuitState;
         public CircuitBreaker(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CircuitBreakerSettings settings = null)
         {
             settings = settings ?? CircuitBreakerSettings.DefaultCircuitBreakerSettings;
@@ -34,6 +33,7 @@ namespace ResilientCommand
             this.commandKey = commandKey;
         }
 
+        public CircuitState State => circuitbreakerPolicy.CircuitState;
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
         {
             if (circuitbreakerPolicy.CircuitState == CircuitState.Open)

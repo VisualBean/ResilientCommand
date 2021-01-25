@@ -4,6 +4,21 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand.Examples
 {
+    class BasicCachingCommand : ResilientCommand<string>
+    {
+        static int count;
+        protected override string GetCacheKey()
+        {
+            return "key";
+        }
+
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            count++;
+            return Task.FromResult(count.ToString());
+        }
+    }
+
     class BasicCachingExample
     {
         static async Task CachingExample()
@@ -30,21 +45,6 @@ namespace ResilientCommand.Examples
             
                 Response: 1
             */
-        }
-    }
-
-    class BasicCachingCommand : ResilientCommand<string>
-    {
-        static int count;
-        protected override Task<string> RunAsync(CancellationToken cancellationToken)
-        {
-            count++;
-            return Task.FromResult(count.ToString());
-        }
-
-        protected override string GetCacheKey()
-        {
-            return "key";
         }
     }
 }

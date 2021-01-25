@@ -5,6 +5,20 @@ using System.Threading.Tasks;
 namespace ResilientCommand.Examples
 {
 
+    class BasicFallbackCommand : ResilientCommand<string>
+    {
+        // Enabled fallback.
+        protected override string Fallback()
+        {
+            return "A fallback response";
+        }
+
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            throw new Exception();
+        }
+    }
+
     class BasicFallbackExample
     {
         static async Task FallbackExample(string[] args)
@@ -27,21 +41,6 @@ namespace ResilientCommand.Examples
                 
                 Response: A fallback response
             */
-        }
-    }
-
-
-    class BasicFallbackCommand : ResilientCommand<string>
-    {
-        protected override Task<string> RunAsync(CancellationToken cancellationToken)
-        {
-            throw new Exception();
-        }
-
-        // Enabled fallback.
-        protected override string Fallback()
-        {
-            return "A fallback response";
         }
     }
 }
