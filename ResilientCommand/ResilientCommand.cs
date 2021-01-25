@@ -110,6 +110,7 @@ namespace ResilientCommand
 
             throw new FallbackNotImplementedException(this.commandKey, innerException);
         }
+
         private CircuitBreaker InitCircuitBreaker()
         {
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
