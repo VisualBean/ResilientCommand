@@ -90,18 +90,23 @@ The above example is ofcourse very trivial, as this could also simply be handled
 but hopefully the idea comes across.
 
 ## Features
+---
 
 ### CommandKey
+---
 `CommandKey` is a way for the `ResilientCommand` to both cache circuitbreakers, but also helps with cachekeys and groupings in general.  
 
 _Note: If no `CommandKey` is supplied, it defaults to `GetType().Name` which is the inheriting class' name._
 
 ### Caching
+---
+
 the response cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to `ExecuteAsync()` to get the result from the cache.
 
 _Note: Responses are cached per `CommandKey`._
 
 ### Semaphore
+---
 The semaphore enables us to limit the amount of parallisme that command can have at any given point.  
 The semaphore is controlled through the `MaxParallelism` integer in `CommandConfiguration`.  
 _Note: Semaphores work per `CommandKey`._  
@@ -116,6 +121,8 @@ config =>
 ```
 
 ### Timeout
+---
+
 The timeout makes sure to cancel the current execution if we pass the timeout limit.  
 
 #### Configuration - defaults
@@ -130,6 +137,8 @@ config =>
 ```
 
 ### CircuitBreaker
+---
+
 The circuit breaker works by looking at a rolling window of errors, and if we get above the configured `failureThreshold` we open the circuit for `durationMiliseconds` until we allow to try again.
 
 #### Configuration - defaults
@@ -147,6 +156,8 @@ config =>
 ```
 
 ### Fallback
+---
+
 The fallback can be thought of as a backup value in case of a failure from the dependency.    
 The idea is that the fallback will be returned and exceptions swallowed, not causing an outage.  
 A fallback can be enabled by overriding `Fallback()` which will cause any exceptions that are thrown to be handled and return the fallback value.  
@@ -166,6 +177,8 @@ config =>
 ```
 
 ### ResilientCommandNotifier
+---
+
 `ResilientCommandNotifier` is a way to keep tabs on which events has been run as part of the current execution.  
 The notifier is set through the singleton factory `EventNotifierFactory`. Only a single notifier is currently supported at a time.
 
@@ -187,6 +200,8 @@ EventNotifierFactory.GetInstance().SetEventNotifier(new ConsoleEventNotifier());
 _Note: The default implementation doesnt do anything. You will have to create a new implementation and set the notifier_
 
 ### Configuration
+---
+
 Most features can be configured and/or disabled through the configuration.  
 Configuration is injected in the constructor.
 
@@ -209,6 +224,8 @@ class BasicCommand : ResilientCommand<string>
     }
 }
 ```
----
+
 ### Examples
+---
+
 Please checkout the [examples](https://github.com/VisualBean/ResilientCommand/tree/main/ResilientCommand.Example) for basic usage.
