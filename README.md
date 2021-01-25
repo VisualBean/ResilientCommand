@@ -10,7 +10,7 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
 ## Currently supported:
 
  |Feature | Description| CanBeDisabled | HasConfiguration |
- |-------|-----------|
+ |-------|-----------|----------------|------------------|
  | Timeout | If a command runs longer than x, we cancel it. | true | true |
  | CircuitBreaker | Rolling window of errors, if circuit is broken we resort to fallback. | true | true |
  | Fallback | A default value to return if the command fails. | false | true |
