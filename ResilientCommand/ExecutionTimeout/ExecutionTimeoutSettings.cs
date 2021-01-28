@@ -15,7 +15,7 @@
         public bool IsEnabled { get; private set; }
         public sealed class Default
         {
-            public const int ExecutionTimeoutInMiliseconds = 10000;
+            public const int ExecutionTimeoutInMiliseconds = 1000;
             public const bool IsEnabled = true;
         }
     }

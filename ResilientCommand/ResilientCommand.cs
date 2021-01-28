@@ -8,6 +8,7 @@ namespace ResilientCommand
     public abstract class ResilientCommand<TResult> where TResult : class
     {
         private readonly CircuitBreaker circuitBreaker;
+        private readonly Collapser collapser;
         private readonly CommandKey commandKey;
         private readonly CommandConfiguration configuration;
         private readonly ResilientCommandEventNotifier eventNotifier;
@@ -24,6 +25,8 @@ namespace ResilientCommand
             circuitBreaker = InitCircuitBreaker();
             executionTimeout = InitExecutionTimeout();
             semaphore = InitSemaphore();
+            collapser = InitCollapser();
+
         }
 
         private bool IsCachedResponseEnabled => GetCacheKey() != null;
@@ -61,7 +64,7 @@ namespace ResilientCommand
                         this.eventNotifier.MarkEvent(ResillientCommandEventType.Failure, this.commandKey);
                         break;
                 }
-                
+
                 return HandleFallback(ex);
             }
             finally
@@ -127,6 +130,16 @@ namespace ResilientCommand
             return null;
         }
 
+        private Collapser InitCollapser()
+        {
+            if (this.configuration.CollapserSettings.IsEnabled)
+            {
+                return CollapserFactory.GetInstance().GetOrCreateCollapser(this.commandKey, this.eventNotifier, this.configuration.CollapserSettings);
+            }
+
+            return null;
+        }
+
         private ResilientCommandEventNotifier InitEventNotifier()
         {
             return EventNotifierFactory.GetInstance().GetEventNotifier();
@@ -149,10 +162,18 @@ namespace ResilientCommand
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
+            Task<TResult> collapsedTask = null;
+            if (this.configuration.CollapserSettings.IsEnabled)
+            {
+                collapsedTask = collapser.ExecuteAsync(RunAsync, cancellationToken);
+            }
+
             Task<TResult> timeoutTask = null;
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
             {
-                timeoutTask = executionTimeout.ExecuteAsync(RunAsync, cancellationToken);
+                timeoutTask = executionTimeout.ExecuteAsync(
+                    innerAction: (ct) => collapsedTask ?? RunAsync(ct), 
+                    cancellationToken);
             }
 
             Task<TResult> circuitBreakerTask = null;
@@ -163,7 +184,7 @@ namespace ResilientCommand
                     cancellationToken);
             }
 
-            Task<TResult> resultTask = circuitBreakerTask ?? RunAsync(cancellationToken);
+            Task<TResult> resultTask = circuitBreakerTask ?? timeoutTask ?? collapsedTask ?? RunAsync(cancellationToken);
 
             return await resultTask;
         }

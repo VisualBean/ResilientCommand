@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand
 {
-    internal class CircuitBreaker
+    internal class CircuitBreaker : IExecutionStrategy
     {
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
         private readonly CommandKey commandKey;
@@ -34,6 +34,7 @@ namespace ResilientCommand
         }
 
         public CircuitState State => circuitbreakerPolicy.CircuitState;
+        
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
         {
             if (circuitbreakerPolicy.CircuitState == CircuitState.Open)

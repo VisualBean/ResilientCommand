@@ -1,6 +1,7 @@
 ﻿using System;
 using static ResilientCommand.CircuitBreakerSettings;
 using static ResilientCommand.ExecutionTimeoutSettings;
+using static ResilientCommand.CollapserSettings;
 
 namespace ResilientCommand
 {
@@ -9,6 +10,8 @@ namespace ResilientCommand
         private CommandConfiguration()
         {
         }
+
+        public CollapserSettings CollapserSettings { get; set; } = DefaultCollapserSettings;
 
         public CircuitBreakerSettings CircuitBreakerSettings { get; set; } = DefaultCircuitBreakerSettings;
 

@@ -15,7 +15,7 @@ namespace ResilientCommand.Tests
 
         public GenericTestableCommand(
                 Func<CancellationToken, Task<string>> action,
-                Func<string> fallbackAction,
+                Func<string> fallbackAction = null,
                 CommandKey commandKey = null,
                 string cacheKey = null,
                 CommandConfiguration config = null) : base(

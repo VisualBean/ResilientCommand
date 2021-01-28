@@ -12,5 +12,6 @@
         FallbackMissing,
         FallbackSkipped,
         ResponseFromCache,
+        Collapsed,
     }
 }

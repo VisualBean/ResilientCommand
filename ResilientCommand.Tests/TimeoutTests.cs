@@ -23,6 +23,13 @@ namespace ResilientCommand.Tests
             config.FallbackEnabled = false;
         });
 
+        static CommandConfiguration allButTimeoutDisabled = CommandConfiguration.CreateConfiguration(config =>
+       {
+           config.ExecutionTimeoutSettings = new ExecutionTimeoutSettings(executionTimeoutInMiliseconds: 1);
+           config.CircuitBreakerSettings = new CircuitBreakerSettings(isEnabled: false);
+           config.FallbackEnabled = false;
+       });
+
         [TestMethod]
         public async Task Timeout_WithFallback_ReturnsFallbackValue()
         {
@@ -56,6 +63,18 @@ namespace ResilientCommand.Tests
                 action: async (ct) => { await Task.Delay(10); return ""; },
                 fallbackAction: () => null,
                 config: DisabledTimeout);
+            await command.ExecuteAsync(default);
+        }
+
+
+        [TestMethod]
+        [ExpectedException(typeof(TimeoutException))]
+        public async Task Timeout_WithDisabledCircuitBreaker_Still_Runs()
+        {
+            var command = new GenericTestableCommand(
+               action: async (ct) => { await Task.Delay(10); return ""; },
+               fallbackAction: () => null,
+               config: allButTimeoutDisabled);
             await command.ExecuteAsync(default);
         }
     }

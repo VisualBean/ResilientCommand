@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand
 {
-    internal class ExecutionTimeout
+    internal class ExecutionTimeout: IExecutionStrategy
     {
         private readonly CommandKey commandKey;
         private readonly ResilientCommandEventNotifier eventNotifier;
