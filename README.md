@@ -90,6 +90,9 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
  | Grouping | Commands are grouped based on `CommandKey`. | true | false | 
  | Notifications | A somewhat simple event system. | N/A | N/A |
 
+## Potential future support:
+- [ ] Ability to inject a cache, instead of having this in the commands themselves.
+- [ ] Request Collapsing.
 
 ## CommandKey
 
