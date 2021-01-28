@@ -17,6 +17,11 @@ namespace ResilientCommand.Tests
         static CommandConfiguration circuitBreakerConfigurationDisabled = CommandConfiguration.CreateConfiguration(config =>
         {
             config.CircuitBreakerSettings = new CircuitBreakerSettings(isEnabled: false);
+        });
+
+        static CommandConfiguration circuitBreakerAndFallbackConfigurationDisabled = CommandConfiguration.CreateConfiguration(config =>
+        {
+            config.CircuitBreakerSettings = new CircuitBreakerSettings(isEnabled: false);
             config.FallbackEnabled = false;
         });
 
@@ -94,7 +99,6 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TestException))]
         public async Task CircuitBreaker_InSameGroupWithFailuresWithDisabledCircuit_DoesNotTripCircuit()
         {
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
@@ -106,16 +110,24 @@ namespace ResilientCommand.Tests
                  config: circuitBreakerConfigurationDisabled);
 
             var command2 = new GenericTestableCommand(
-                 action: (ct) => { throw new TestException(); },
+                 action: async (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
                  commandKey: cmdKey,
-                 config: circuitBreakerConfigurationDisabled);
+                 config: circuitBreakerAndFallbackConfigurationDisabled);
 
             await command.ExecuteAsync(default);
             await command.ExecuteAsync(default);
             await command.ExecuteAsync(default);
 
-            var response = await command2.ExecuteAsync(default);
+            try
+            {
+                await command2.ExecuteAsync(default);
+            }
+            catch (Exception ex)
+            {
+                Assert.IsInstanceOfType(ex, typeof(AggregateException));
+                Assert.IsInstanceOfType(ex.InnerException, typeof(TestException));
+            }
         }
     }
 }
