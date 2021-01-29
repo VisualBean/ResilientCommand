@@ -80,19 +80,19 @@ but hopefully the idea comes across.
 Out of the box, all concrete `ResilientCommand`s have timeout and circuit breakers enabled, with 'somewhat' sane defaults.
 ## Currently supported:
 
- |Feature | Description| can be disabled | Can be configured |
+ |Feature | Description| Enabled By Default |
  |-------|-----------|----------------|------------------|
- | Timeout | If a command runs longer than x, we cancel it. | true | true |
- | CircuitBreaker | Rolling window of errors, if circuit is broken we resort to fallback. | true | true |
- | Fallback | A default value to return if the command fails. | true | true |
- | Semaphore | A way of minimising max parallelism per command. | false | true |
- | Response Caching | Cache the result based on `CacheKey`. | true | false |
- | Grouping | Commands are grouped based on `CommandKey`. | true | false | 
+ | Timeout | If a command runs longer than x, we cancel it. | true |
+ | CircuitBreaker | Rolling window of errors, if circuit is broken we resort to fallback. | true |
+ | Fallback | A default value to return if the command fails. | false |
+ | Semaphore | A way of minimising max parallelism per command. | true |
+ | Response Caching | Cache the result based on `CacheKey`. | false |
+ | Collapsing | Collapse calls to the same command, within a window, so only one gets called. | false |
+ | Grouping | Commands are grouped based on `CommandKey`. | true |
  | Notifications | A somewhat simple event system. | N/A | N/A |
 
 ## Potential future support:
 - [ ] Ability to inject a cache, instead of having this in the commands themselves.
-- [ ] Request Collapsing.
 
 ## CommandKey
 
@@ -173,6 +173,28 @@ config =>
     config.FallbackEnabled = true;
 });
 ```
+## Collapsing
+**Disabled by default**  
+
+Collapsing of requests is the same as 'Debouncing'.   
+Simply, only make a single call to a dependency within a given timeframe,   
+if multiple calls are being made.  
+
+_Note:_ Commands that enable this should be stateless, as only the first request will go through. Subsequent requests will use the results of the first one.  
+
+### Configuration - defaults
+``` csharp 
+CommandConfiguration.CreateConfiguration(
+config => 
+{
+    config.CollapserSettings = new CollapserSettings 
+    { 
+        IsEnabled = false,
+        Window = Timespan.FromMilliseconds(100),
+     }
+});
+```
+
 
 ## ResilientCommandNotifier
 
