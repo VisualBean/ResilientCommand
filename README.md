@@ -9,6 +9,7 @@ This project seeks to do just that.
 # Basic usage
 Lets take a basic example.  
 Lets say we run a "IsItUp" service. The idea is that people call you to check whether some website or service is up or down.
+We also only want to check the site a max of once per second, if multiple people are looking to check at the same time.
 
 ``` csharp
 // The IsUpResult class.
@@ -50,7 +51,10 @@ class IsItUpCommand : ResilientCommand<IsUpResult>
     private readonly string site;
     private readonly HttpClient client;
 
-    public IsItUpCommand(string site)
+    public IsItUpCommand(string site) : base(
+        configuration: CommandConfiguration.CreateConfiguration(config => 
+            config.CollapserSettings = new CollapserSettings(isEnabled: true, window: TimeSpan.FromSeconds(1))
+        ))
     {
         this.site = site;
         this.client = new HttpClient();
