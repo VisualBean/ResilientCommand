@@ -101,7 +101,7 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
 _Note: If no `CommandKey` is supplied, it defaults to `GetType().Name` which is the inheriting class' name._
 
 ## Caching
-**Disabled by default  
+**Disabled by default**  
 
 the response cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to `ExecuteAsync()` to get the result from the cache.
 
@@ -116,7 +116,7 @@ protected override string GetCacheKey()
 ```
 
 ## Semaphore
-**Enabled by default  
+**Enabled by default**    
 
 The semaphore enables us to limit the amount of parallisme that command can have at any given point.  
 The semaphore is controlled through the `MaxParallelism` integer in `CommandConfiguration`.  
@@ -132,7 +132,7 @@ config =>
 ```
 
 ## Timeout
-**Enabled by default  
+**Enabled by default**    
 
 The timeout makes sure to cancel the current execution if we pass the timeout limit.  
 
@@ -148,7 +148,7 @@ config =>
 ```
 
 ## CircuitBreaker
-**Enabled by default  
+**Enabled by default**    
 
 The circuit breaker works by looking at a rolling window of errors, and if we get above the configured `failureThreshold` we open the circuit for `durationMiliseconds` until we allow to try again.
 
@@ -167,7 +167,7 @@ config =>
 ```
 
 ## Fallback
-**Disabled by default  
+**Disabled by default**    
 
 The fallback can be thought of as a backup value in case of a failure from the dependency.    
 The idea is that the fallback will be returned and exceptions swallowed, not causing an outage.  
