@@ -101,12 +101,22 @@ Out of the box, all concrete `ResilientCommand`s have timeout and circuit breake
 _Note: If no `CommandKey` is supplied, it defaults to `GetType().Name` which is the inheriting class' name._
 
 ## Caching
+**Disabled by default  
 
 the response cache can be enabled by overriding `GetCacheKey()` which will cause subsequent calls to `ExecuteAsync()` to get the result from the cache.
 
 _Note: Responses are cached per `CommandKey`._
 
+To enable in a command:
+```csharp
+protected override string GetCacheKey()
+{
+    return "key";
+}
+```
+
 ## Semaphore
+**Enabled by default  
 
 The semaphore enables us to limit the amount of parallisme that command can have at any given point.  
 The semaphore is controlled through the `MaxParallelism` integer in `CommandConfiguration`.  
@@ -122,6 +132,7 @@ config =>
 ```
 
 ## Timeout
+**Enabled by default  
 
 The timeout makes sure to cancel the current execution if we pass the timeout limit.  
 
@@ -137,6 +148,7 @@ config =>
 ```
 
 ## CircuitBreaker
+**Enabled by default  
 
 The circuit breaker works by looking at a rolling window of errors, and if we get above the configured `failureThreshold` we open the circuit for `durationMiliseconds` until we allow to try again.
 
@@ -155,6 +167,7 @@ config =>
 ```
 
 ## Fallback
+**Disabled by default  
 
 The fallback can be thought of as a backup value in case of a failure from the dependency.    
 The idea is that the fallback will be returned and exceptions swallowed, not causing an outage.  
@@ -164,6 +177,14 @@ The fallback value is ment to be a static or at least local value.
 Fallback can be disabled through configuration. If disabled, exceptions will fall through and bubble up.  
 
 _Note: If `Fallback()` has not been overridden nor disabled, the command will throw a `FallbackNotImplementedException` exception._  
+
+To enable for a command that returns a string.
+``` csharp
+protected override string Fallback()
+{
+    return "Some sane value.";
+}
+```
 
 ### Configuration - defaults
 ``` csharp 
