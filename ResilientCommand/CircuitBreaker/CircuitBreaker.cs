@@ -1,9 +1,11 @@
 ﻿using Polly;
 using Polly.CircuitBreaker;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
+[assembly: InternalsVisibleTo("ResilientCommand.Tests")]
 namespace ResilientCommand
 {
     internal class CircuitBreaker : IExecutionStrategy

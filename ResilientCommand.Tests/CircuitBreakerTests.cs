@@ -9,9 +9,11 @@ namespace ResilientCommand.Tests
     [TestClass]
     public class CircuitBreakerTests
     {
+        static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2);
+
         static CommandConfiguration circuitBreakerConfiguration = CommandConfiguration.CreateConfiguration(config =>
         {
-            config.CircuitBreakerSettings = GenericTestableCommand.SmallCircuitBreaker;
+            config.CircuitBreakerSettings = SmallCircuitBreaker;
         });
 
         static CommandConfiguration circuitBreakerConfigurationDisabled = CommandConfiguration.CreateConfiguration(config =>
@@ -25,14 +27,55 @@ namespace ResilientCommand.Tests
             config.FallbackEnabled = false;
         });
 
-        static CommandConfiguration circuitBreakerConfigurationHigherTimeout = CommandConfiguration.CreateConfiguration(config =>
+        static CommandConfiguration circuitBreakerConfigurationWithFallbackDisabled = CommandConfiguration.CreateConfiguration(config =>
         {
-            config.CircuitBreakerSettings = GenericTestableCommand.SmallCircuitBreaker;
+            config.CircuitBreakerSettings = SmallCircuitBreaker;
             config.FallbackEnabled = false;
         });
 
         [TestMethod]
-        public async Task CircuitBreaker_InDifferentGroupWithFailures_DoesNotThrow()
+        public async Task CircuitBreaker_WithNoFailures_ReturnsResult()
+        {
+            var value = "Test";
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
+            var response = await circuitBreaker.ExecuteAsync((ct) => Task.FromResult(value), default);
+
+            response.Should().Be(value);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(TestException))]
+        public async Task CircuitBreaker_WithFailureWithinCircuitBreaker_DoesNotSwallowException()
+        {
+            
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
+            await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CircuitBrokenException))]
+        public async Task CircuitBreaker_WithBrokenCircuit_ThrowsBrokenCircuitException()
+        {
+
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
+
+            try
+            {
+                await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
+            }
+            catch
+            {
+                await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
+                await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
+            }
+            await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
+        }
+
+        [TestMethod]
+        public async Task CircuitBreakerCommand_InDifferentGroupWithFailures_DoesNotThrow()
         {
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
             var cmdKey2 = new CommandKey(Guid.NewGuid().ToString());
@@ -47,7 +90,7 @@ namespace ResilientCommand.Tests
                  action: (ct) => { throw new TestException(); },
                  fallbackAction: () => "fallback",
                  commandKey: cmdKey2,
-                 config: circuitBreakerConfigurationHigherTimeout);
+                 config: circuitBreakerConfigurationWithFallbackDisabled);
 
             await command.ExecuteAsync(default);
             await command.ExecuteAsync(default);
@@ -67,7 +110,7 @@ namespace ResilientCommand.Tests
 
         [TestMethod]
 
-        public async Task CircuitBreaker_InSameGroupWithFailures_ThrowsBrokenCircuit()
+        public async Task CircuitBreakerCommand_InSameGroupWithFailures_ThrowsBrokenCircuit()
         {
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
 
@@ -99,7 +142,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        public async Task CircuitBreaker_InSameGroupWithFailuresWithDisabledCircuit_DoesNotTripCircuit()
+        public async Task CircuitBreakerCommand_InSameGroupWithFailuresWithDisabledCircuit_DoesNotTripCircuit()
         {
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
 
