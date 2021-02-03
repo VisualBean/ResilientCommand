@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,13 +6,13 @@ namespace ResilientCommand
 {
     public abstract class ResilientCommand<TResult> where TResult : class
     {
+        private readonly ICache resultCache;
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
         private readonly CommandKey commandKey;
         private readonly CommandConfiguration configuration;
         private readonly ResilientCommandEventNotifier eventNotifier;
         private readonly ExecutionTimeout executionTimeout;
-        private readonly ConcurrentDictionary<string, TResult> resultCache = new ConcurrentDictionary<string, TResult>();
         private readonly SemaphoreSlim semaphore;
 
         public ResilientCommand(CommandKey commandKey = null, CommandConfiguration configuration = null)
@@ -26,7 +25,7 @@ namespace ResilientCommand
             executionTimeout = InitExecutionTimeout();
             semaphore = InitSemaphore();
             collapser = InitCollapser();
-
+            resultCache = InitCache();
         }
 
         private bool IsCachedResponseEnabled => GetCacheKey() != null;
@@ -36,7 +35,7 @@ namespace ResilientCommand
             string cacheKey = $"{commandKey}_{GetCacheKey()}";
 
             TResult result;
-            if (IsCachedResponseEnabled && resultCache.TryGetValue(cacheKey, out result))
+            if (IsCachedResponseEnabled && resultCache.TryGet(cacheKey, out result))
             {
                 this.eventNotifier.MarkEvent(ResillientCommandEventType.ResponseFromCache, this.commandKey);
                 return result;
@@ -118,6 +117,16 @@ namespace ResilientCommand
 
             this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
             throw new FallbackNotImplementedException(this.commandKey, innerException);
+        }
+
+        private ICache InitCache()
+        {
+            if (IsCachedResponseEnabled)
+            {
+                return new InMemoryCache();
+            }
+
+            return null;
         }
 
         private CircuitBreaker InitCircuitBreaker()
