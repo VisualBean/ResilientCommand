@@ -6,47 +6,27 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
 {
+    public class CancellationCommand : ResilientCommand<string>
+    {
+        protected override async Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            return "success";
+        }
+    }
+
     [TestClass]
     public class CancellationTests
     {
         [TestMethod]
-        [ExpectedInnerException(typeof(OperationCanceledException))]
+        [ExpectedException(typeof(OperationCanceledException))]
         public async Task Command_WithCancelledToken_PropagatesCancellation()
         {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-
-            var command = new GenericTestableCommand(
-                    async (ct) => { return ""; },
-                    () => null,
-                    commandKey: cmdKey);
+            var command = new CancellationCommand();
 
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
             await command.ExecuteAsync(cts.Token);
-            // Should throw fallbackNotImplementedException with an innerException of OperationCancelledException.
-        }
-
-    }
-
-    public class ExpectedInnerExceptionAttribute : ExpectedExceptionBaseAttribute
-    {
-        private Type expectedInnerExceptionType;
-
-        public ExpectedInnerExceptionAttribute(Type expectedInnerExceptionType)
-        {
-            this.expectedInnerExceptionType = expectedInnerExceptionType;
-        }
-
-        protected override void Verify(Exception exception)
-        {
-            var innerType = exception.InnerException?.GetType();
-            if (innerType != null && innerType == expectedInnerExceptionType)
-            {
-                return;
-            }
-
-            throw new Exception($"Expected inner exception type: {expectedInnerExceptionType}, got: {innerType}");
         }
     }
 }
