@@ -34,8 +34,6 @@ namespace ResilientCommand
 
             this.commandKey = commandKey;
         }
-
-        public CircuitState State => circuitbreakerPolicy.CircuitState;
         
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
         {
