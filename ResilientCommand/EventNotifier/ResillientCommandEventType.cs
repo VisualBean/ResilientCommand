@@ -10,7 +10,7 @@
         CircuitReset,
         FallbackSuccess,
         FallbackMissing,
-        FallbackSkipped,
+        FallbackDisabled,
         ResponseFromCache,
         Collapsed,
     }

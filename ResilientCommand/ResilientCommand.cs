@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,6 +8,7 @@ namespace ResilientCommand
 {
     public abstract class ResilientCommand<TResult> where TResult : class
     {
+        private static ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
         private readonly ICache resultCache;
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
@@ -78,7 +81,7 @@ namespace ResilientCommand
         /// <returns></returns>
         protected virtual TResult Fallback()
         {
-            return null;
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -105,18 +108,33 @@ namespace ResilientCommand
         {
             if (!this.configuration.FallbackEnabled)
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackSkipped, this.commandKey);
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
                 throw innerException;
             }
-            var fallbackValue = Fallback();
-            if (fallbackValue != null)
+
+            if (!hasFallback())
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackSuccess, this.commandKey);
-                return fallbackValue;
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
+                throw innerException;
             }
 
-            this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
-            throw new FallbackNotImplementedException(this.commandKey, innerException);
+            return Fallback();
+        }
+
+        private bool hasFallback()
+        {
+            if (ContainsFallback.TryGetValue(this.commandKey, out bool hasFallback))
+            {
+                return hasFallback;
+            }
+
+            var methodInfo = GetType().GetMethod(nameof(Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
+
+            hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
+
+            ContainsFallback.TryAdd(this.commandKey, hasFallback);
+
+            return hasFallback;
         }
 
         private ICache InitCache()
