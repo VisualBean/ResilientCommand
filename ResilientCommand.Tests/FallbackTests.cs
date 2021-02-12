@@ -64,7 +64,30 @@ namespace ResilientCommand.Tests
         [ExpectedInnerException(typeof(TestException))]
         public async Task Fallback_WithDisabledFallback_FallbackIsSkippedAndThrows()
         {
-            var command = new FailFastWithFallbackCommand("fallback", shouldThrow: true, CommandConfiguration.CreateConfiguration(c => c.FallbackEnabled = false));
+            var command = new FailFastWithFallbackCommand(
+                "fallback", 
+                shouldThrow: true, 
+                CommandConfiguration.CreateConfiguration(c => c.FallbackEnabled = false));
+
+            await command.ExecuteAsync(default);
+        }
+
+        [TestMethod]
+        [ExpectedInnerException(typeof(TestException))]
+        public async Task Fallback_WithRuntimeFallbackDisable_FallbackIsSkippedAndThrows()
+        {
+            var fallbackValue = "fallback";
+            var configuration = CommandConfiguration.CreateConfiguration(c => c.FallbackEnabled = true);
+
+            var command = new FailFastWithFallbackCommand(
+                fallbackValue,
+                shouldThrow: true,
+                configuration);
+
+            var result = await command.ExecuteAsync(default);
+            Assert.AreEqual(fallbackValue, result);
+
+            configuration.FallbackEnabled = false;
 
             await command.ExecuteAsync(default);
         }

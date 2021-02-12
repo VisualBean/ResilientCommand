@@ -104,39 +104,6 @@ namespace ResilientCommand
         /// <returns></returns>
         protected abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
 
-        private TResult HandleFallback(Exception innerException)
-        {
-            if (!this.configuration.FallbackEnabled)
-            {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
-                throw innerException;
-            }
-
-            if (!hasFallback())
-            {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
-                throw innerException;
-            }
-
-            return Fallback();
-        }
-
-        private bool hasFallback()
-        {
-            if (ContainsFallback.TryGetValue(this.commandKey, out bool hasFallback))
-            {
-                return hasFallback;
-            }
-
-            var methodInfo = GetType().GetMethod(nameof(Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
-
-            hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
-
-            ContainsFallback.TryAdd(this.commandKey, hasFallback);
-
-            return hasFallback;
-        }
-
         private ICache InitCache()
         {
             if (IsCachedResponseEnabled)
@@ -185,6 +152,38 @@ namespace ResilientCommand
         private SemaphoreSlim InitSemaphore()
         {
             return SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
+        }
+
+        private TResult HandleFallback(Exception innerException)
+        {
+            if (!this.configuration.FallbackEnabled)
+            {
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
+                throw innerException;
+            }
+
+            if (!HasFallback())
+            {
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
+                throw innerException;
+            }
+
+            return Fallback();
+        }
+
+        private bool HasFallback()
+        {
+            if (ContainsFallback.TryGetValue(this.commandKey, out bool hasFallback))
+            {
+                return hasFallback;
+            }
+
+            var methodInfo = GetType().GetMethod(nameof(Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
+            hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
+
+            ContainsFallback.TryAdd(this.commandKey, hasFallback);
+
+            return hasFallback;
         }
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
