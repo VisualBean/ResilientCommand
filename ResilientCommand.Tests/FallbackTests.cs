@@ -67,7 +67,7 @@ namespace ResilientCommand.Tests
             var command = new FailFastWithFallbackCommand(
                 "fallback", 
                 shouldThrow: true, 
-                CommandConfiguration.CreateConfiguration(c => c.FallbackEnabled = false));
+                CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = new FallbackSettings(false)));
 
             await command.ExecuteAsync(default);
         }
@@ -77,7 +77,8 @@ namespace ResilientCommand.Tests
         public async Task Fallback_WithRuntimeFallbackDisable_FallbackIsSkippedAndThrows()
         {
             var fallbackValue = "fallback";
-            var configuration = CommandConfiguration.CreateConfiguration(c => c.FallbackEnabled = true);
+            var fallbackSettings = new FallbackSettings(false);
+            var configuration = CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = fallbackSettings);
 
             var command = new FailFastWithFallbackCommand(
                 fallbackValue,
@@ -87,7 +88,7 @@ namespace ResilientCommand.Tests
             var result = await command.ExecuteAsync(default);
             Assert.AreEqual(fallbackValue, result);
 
-            configuration.FallbackEnabled = false;
+            fallbackSettings.IsEnabled = false;
 
             await command.ExecuteAsync(default);
         }

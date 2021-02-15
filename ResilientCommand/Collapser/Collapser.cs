@@ -12,11 +12,14 @@ namespace ResilientCommand
         private CommandKey commandKey;
         private long windowInTicks;
         private ResilientCommandEventNotifier eventNotifier;
+        private readonly CollapserSettings settings;
         private object lastResult;
         private long nextRun;
 
         public Collapser(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CollapserSettings settings)
         {
+            this.settings = settings ?? CollapserSettings.DefaultCollapserSettings;
+
             this.commandKey = commandKey;
             this.windowInTicks = settings.Window.Ticks;
             this.eventNotifier = eventNotifier;
@@ -24,11 +27,18 @@ namespace ResilientCommand
 
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!this.settings.IsEnabled)
+            {
+                return await innerAction(cancellationToken);
+            }
+
             long requested = DateTime.UtcNow.Ticks;
 
             try
             {
-                await semaphore.WaitAsync();
+                await semaphore.WaitAsync(cancellationToken);
 
                 if (requested <= nextRun)
                 {

@@ -10,12 +10,13 @@ namespace ResilientCommand
 {
     internal class CircuitBreaker : IExecutionStrategy
     {
+        private readonly CircuitBreakerSettings settings;
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
         private readonly CommandKey commandKey;
 
         public CircuitBreaker(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CircuitBreakerSettings settings = null)
         {
-            settings = settings ?? CircuitBreakerSettings.DefaultCircuitBreakerSettings;
+            this.settings = settings ?? CircuitBreakerSettings.DefaultCircuitBreakerSettings;
 
             circuitbreakerPolicy = Policy
             .Handle<Exception>()
@@ -37,6 +38,13 @@ namespace ResilientCommand
         
         public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!this.settings.IsEnabled)
+            {
+                return await innerAction(cancellationToken);
+            }
+
             if (circuitbreakerPolicy.CircuitState == CircuitState.Open)
             {
                 throw new CircuitBrokenException(this.commandKey);

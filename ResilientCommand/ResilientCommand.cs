@@ -156,7 +156,7 @@ namespace ResilientCommand
 
         private TResult HandleFallback(Exception innerException)
         {
-            if (!this.configuration.FallbackEnabled)
+            if (!this.configuration.FallbackSettings.IsEnabled)
             {
                 this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
                 throw innerException;

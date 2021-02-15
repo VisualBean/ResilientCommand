@@ -2,6 +2,7 @@
 using static ResilientCommand.CircuitBreakerSettings;
 using static ResilientCommand.ExecutionTimeoutSettings;
 using static ResilientCommand.CollapserSettings;
+using static ResilientCommand.FallbackSettings;
 
 namespace ResilientCommand
 {
@@ -17,7 +18,7 @@ namespace ResilientCommand
 
         public ExecutionTimeoutSettings ExecutionTimeoutSettings { get; set; } = DefaultExecutionTimeoutSettings;
 
-        public bool FallbackEnabled { get; set; } = true;
+        public FallbackSettings FallbackSettings { get; set; } = DefaultFallbackSettings;
 
         public int MaxParallelism { get; set; } = 10;
 

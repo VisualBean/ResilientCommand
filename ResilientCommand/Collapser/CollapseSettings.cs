@@ -14,7 +14,7 @@ namespace ResilientCommand
 
         public static CollapserSettings DefaultCollapserSettings => new CollapserSettings();
 
-        public bool IsEnabled { get; private set; }
+        public bool IsEnabled { get; set; }
 
         public TimeSpan Window { get; private set; }
 

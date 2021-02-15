@@ -11,8 +11,11 @@
         }
 
         public static ExecutionTimeoutSettings DefaultExecutionTimeoutSettings => new ExecutionTimeoutSettings();
+
         public int ExecutionTimeoutInMiliseconds { get; private set; }
-        public bool IsEnabled { get; private set; }
+
+        public bool IsEnabled { get; set; }
+
         public sealed class Default
         {
             public const int ExecutionTimeoutInMiliseconds = 1000;

@@ -19,7 +19,7 @@
         public static CircuitBreakerSettings DefaultCircuitBreakerSettings => new CircuitBreakerSettings();
         public int DurationMiliseconds { get; private set; }
         public double FailureThreshhold { get; private set; }
-        public bool IsEnabled { get; private set; }
+        public bool IsEnabled { get; set; }
         public int MinimumThroughput { get; private set; }
         public int SamplingDurationMiliseconds { get; private set; }
         public sealed class Default
