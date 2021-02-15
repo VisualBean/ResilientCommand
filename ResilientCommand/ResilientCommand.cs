@@ -9,13 +9,13 @@ namespace ResilientCommand
     public abstract class ResilientCommand<TResult> where TResult : class
     {
         private static ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
-        private readonly ICache resultCache;
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
         private readonly CommandKey commandKey;
         private readonly CommandConfiguration configuration;
         private readonly ResilientCommandEventNotifier eventNotifier;
         private readonly ExecutionTimeout executionTimeout;
+        private readonly ICache resultCache;
         private readonly SemaphoreSlim semaphore;
 
         public ResilientCommand(CommandKey commandKey = null, CommandConfiguration configuration = null)
@@ -104,6 +104,38 @@ namespace ResilientCommand
         /// <returns></returns>
         protected abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
 
+        private TResult HandleFallback(Exception innerException)
+        {
+            if (!this.configuration.FallbackSettings.IsEnabled)
+            {
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
+                throw innerException;
+            }
+
+            if (!HasFallback())
+            {
+                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
+                throw innerException;
+            }
+
+            return Fallback();
+        }
+
+        private bool HasFallback()
+        {
+            if (ContainsFallback.TryGetValue(this.commandKey, out bool hasFallback))
+            {
+                return hasFallback;
+            }
+
+            var methodInfo = GetType().GetMethod(nameof(Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
+            hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
+
+            ContainsFallback.TryAdd(this.commandKey, hasFallback);
+
+            return hasFallback;
+        }
+
         private ICache InitCache()
         {
             if (IsCachedResponseEnabled)
@@ -153,39 +185,6 @@ namespace ResilientCommand
         {
             return SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
         }
-
-        private TResult HandleFallback(Exception innerException)
-        {
-            if (!this.configuration.FallbackSettings.IsEnabled)
-            {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
-                throw innerException;
-            }
-
-            if (!HasFallback())
-            {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
-                throw innerException;
-            }
-
-            return Fallback();
-        }
-
-        private bool HasFallback()
-        {
-            if (ContainsFallback.TryGetValue(this.commandKey, out bool hasFallback))
-            {
-                return hasFallback;
-            }
-
-            var methodInfo = GetType().GetMethod(nameof(Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
-            hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
-
-            ContainsFallback.TryAdd(this.commandKey, hasFallback);
-
-            return hasFallback;
-        }
-
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
             Task<TResult> collapsedTask = null;
