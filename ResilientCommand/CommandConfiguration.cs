@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using static ResilientCommand.CircuitBreakerSettings;
 using static ResilientCommand.ExecutionTimeoutSettings;
 using static ResilientCommand.CollapserSettings;
@@ -20,7 +20,7 @@ namespace ResilientCommand
 
         public FallbackSettings FallbackSettings { get; set; } = DefaultFallbackSettings;
 
-        public int MaxParallelism { get; set; } = 10;
+        public ushort MaxParallelism { get; set; } = 10;
 
         /// <summary>
         /// Creates the configuration with default values.
