@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using static ResilientCommand.CircuitBreakerSettings;
 using static ResilientCommand.ExecutionTimeoutSettings;
 using static ResilientCommand.CollapserSettings;
@@ -40,7 +40,32 @@ namespace ResilientCommand
         {
             var commandConfiguration = new CommandConfiguration();
             configurationFactory(commandConfiguration);
+            ValidateConfiguration(commandConfiguration);
+
             return commandConfiguration;
+        }
+
+        private static void ValidateConfiguration(CommandConfiguration commandConfiguration)
+        {
+            if (commandConfiguration.CircuitBreakerSettings == null)
+            {
+                throw new ArgumentNullException(nameof(commandConfiguration.CircuitBreakerSettings));
+            }
+
+            if (commandConfiguration.CollapserSettings == null)
+            {
+                throw new ArgumentNullException(nameof(commandConfiguration.CollapserSettings));
+            }
+
+            if (commandConfiguration.ExecutionTimeoutSettings == null)
+            {
+                throw new ArgumentNullException(nameof(commandConfiguration.ExecutionTimeoutSettings));
+            }
+            
+            if (commandConfiguration.FallbackSettings == null)
+            {
+                throw new ArgumentNullException(nameof(commandConfiguration.FallbackSettings));
+            }
         }
     }
 }
