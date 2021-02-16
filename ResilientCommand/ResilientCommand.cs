@@ -8,7 +8,7 @@ namespace ResilientCommand
 {
     public abstract class ResilientCommand<TResult> where TResult : class
     {
-        private static ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
+        private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
         private readonly CommandKey commandKey;
@@ -18,17 +18,23 @@ namespace ResilientCommand
         private readonly ICache resultCache;
         private readonly SemaphoreSlim semaphore;
 
-        public ResilientCommand(CommandKey commandKey = null, CommandConfiguration configuration = null)
+        public ResilientCommand(
+            CommandKey commandKey = null, 
+            CircuitBreaker circuitBreaker = null, 
+            ExecutionTimeout executionTimeout = null, 
+            Collapser collapser = null, 
+            ICache cache = null, 
+            CommandConfiguration configuration = null)
         {
             this.commandKey = commandKey ?? new CommandKey(GetType().Name);
             this.configuration = configuration ?? CommandConfiguration.CreateConfiguration();
 
             eventNotifier = InitEventNotifier();
-            circuitBreaker = InitCircuitBreaker();
-            executionTimeout = InitExecutionTimeout();
+            this.circuitBreaker = InitCircuitBreaker(circuitBreaker);
+            this.executionTimeout = InitExecutionTimeout(executionTimeout);
             semaphore = InitSemaphore();
-            collapser = InitCollapser();
-            resultCache = InitCache();
+            this.collapser = InitCollapser(collapser);
+            this.resultCache = InitCache(cache);
         }
 
         private bool IsCachedResponseEnabled => GetCacheKey() != null;
@@ -136,31 +142,31 @@ namespace ResilientCommand
             return hasFallback;
         }
 
-        private ICache InitCache()
-        {
+        private ICache InitCache(ICache cache)
+        {   
             if (IsCachedResponseEnabled)
             {
-                return new InMemoryCache();
+                return cache ?? new InMemoryCache();
             }
 
             return null;
         }
 
-        private CircuitBreaker InitCircuitBreaker()
+        private CircuitBreaker InitCircuitBreaker(CircuitBreaker circuitBreaker)
         {
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
             {
-                return CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(this.commandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
+                return circuitBreaker ?? CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(this.commandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
             }
 
             return null;
         }
 
-        private Collapser InitCollapser()
+        private Collapser InitCollapser(Collapser collapser)
         {
             if (this.configuration.CollapserSettings.IsEnabled)
             {
-                return CollapserFactory.GetInstance().GetOrCreateCollapser(this.commandKey, this.eventNotifier, this.configuration.CollapserSettings);
+                return collapser ?? CollapserFactory.GetInstance().GetOrCreateCollapser(this.commandKey, this.eventNotifier, this.configuration.CollapserSettings);
             }
 
             return null;
@@ -171,11 +177,11 @@ namespace ResilientCommand
             return EventNotifierFactory.GetInstance().GetEventNotifier();
         }
 
-        private ExecutionTimeout InitExecutionTimeout()
+        private ExecutionTimeout InitExecutionTimeout(ExecutionTimeout executionTimeout)
         {
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
             {
-                return new ExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
+                return executionTimeout ?? new ExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
             }
 
             return null;

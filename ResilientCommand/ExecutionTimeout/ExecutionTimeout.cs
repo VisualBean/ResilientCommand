@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-[assembly: InternalsVisibleTo("ResilientCommand.Tests")]
 namespace ResilientCommand
 {
-    internal class ExecutionTimeout: IExecutionStrategy
+    public class ExecutionTimeout : ExecutionStrategy
     {
         private readonly CommandKey commandKey;
         private readonly ResilientCommandEventNotifier eventNotifier;
@@ -26,7 +24,7 @@ namespace ResilientCommand
             this.commandKey = commandKey;
             this.eventNotifier = eventNotifier;
         }
-        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
+        public override async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             

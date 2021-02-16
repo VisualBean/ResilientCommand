@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-[assembly: InternalsVisibleTo("ResilientCommand.Tests")]
 namespace ResilientCommand
 {
-    public class Collapser : IExecutionStrategy
+    public class Collapser : ExecutionStrategy
     {
         private SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private CommandKey commandKey;
@@ -25,7 +23,7 @@ namespace ResilientCommand
             this.eventNotifier = eventNotifier;
         }
 
-        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
+        public override async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

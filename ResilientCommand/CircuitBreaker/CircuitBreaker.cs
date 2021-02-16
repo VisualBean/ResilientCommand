@@ -1,14 +1,12 @@
 ﻿using Polly;
 using Polly.CircuitBreaker;
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-[assembly: InternalsVisibleTo("ResilientCommand.Tests")]
 namespace ResilientCommand
 {
-    internal class CircuitBreaker : IExecutionStrategy
+    public class CircuitBreaker : ExecutionStrategy
     {
         private readonly CircuitBreakerSettings settings;
         private readonly AsyncCircuitBreakerPolicy circuitbreakerPolicy;
@@ -36,7 +34,7 @@ namespace ResilientCommand
             this.commandKey = commandKey;
         }
         
-        public async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
+        public override async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
