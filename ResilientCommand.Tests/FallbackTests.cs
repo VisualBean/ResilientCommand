@@ -7,7 +7,7 @@ namespace ResilientCommand.Tests
 {
     public class FailFastCommand : ResilientCommand<string>
     {
-        private bool throwException;
+        private readonly bool throwException;
 
         public FailFastCommand(bool shouldThrow)
         {
@@ -27,7 +27,7 @@ namespace ResilientCommand.Tests
     public class FailFastWithFallbackCommand : ResilientCommand<string>
     {
         private readonly string fallbackValue;
-        private bool throwException;
+        private readonly bool throwException;
 
         public FailFastWithFallbackCommand(string fallbackValue, bool shouldThrow, CommandConfiguration configuration = null) : base(configuration: configuration)
         {
