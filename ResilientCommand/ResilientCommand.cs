@@ -66,8 +66,7 @@ namespace ResilientCommand
         {
             string cacheKey = $"{this.commandKey}_{this.GetCacheKey()}";
 
-            TResult result;
-            if (this.IsCachedResponseEnabled && this.resultCache.TryGet(cacheKey, out result))
+            if (this.IsCachedResponseEnabled && this.resultCache.TryGet(cacheKey, out TResult result))
             {
                 this.eventNotifier.RaiseEvent(ResilientCommandEventType.ResponseFromCache, this.commandKey);
                 return result;

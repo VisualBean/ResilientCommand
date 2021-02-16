@@ -27,7 +27,7 @@ namespace ResilientCommand
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new ArgumentException(nameof(key));
+                throw new ArgumentException("Key must not be null or empty.", nameof(key));
             }
 
             ResultCache.TryRemove(key, out _);
@@ -48,7 +48,7 @@ namespace ResilientCommand
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new ArgumentException(nameof(key));
+                throw new ArgumentException("Key must not be null or empty.", nameof(key));
             }
 
             if (value == null)
@@ -73,7 +73,7 @@ namespace ResilientCommand
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new ArgumentException(nameof(key));
+                throw new ArgumentException("Key must not be null or empty.", nameof(key));
             }
 
             var result = ResultCache.TryGetValue(key, out object innerValue);
