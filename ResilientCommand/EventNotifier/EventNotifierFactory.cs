@@ -1,22 +1,42 @@
-﻿using System;
+﻿// <copyright file="EventNotifierFactory.cs" company="Visualbean">
+// Copyright (c) Visualbean. All rights reserved.
+// </copyright>
 
 namespace ResilientCommand
 {
+    using System;
+
+    /// <summary>
+    /// A singleton notifier factory.
+    /// </summary>
     public class EventNotifierFactory
     {
         private static readonly Lazy<EventNotifierFactory>
-        instance =
-            new Lazy<EventNotifierFactory>
-                (() => new EventNotifierFactory());
+        Instance =
+            new Lazy<EventNotifierFactory>(
+                () => new EventNotifierFactory());
 
-        ResilientCommandEventNotifier notifier = new NullEventNotifier();
-        public static EventNotifierFactory GetInstance() => instance.Value;
+        private ResilientCommandEventNotifier notifier = new NullEventNotifier();
 
+        /// <summary>
+        /// Gets an instance of <see cref="EventNotifierFactory"/>.
+        /// </summary>
+        /// <returns>An instance of a <see cref="EventNotifierFactory"/>.</returns>
+        public static EventNotifierFactory GetInstance() => Instance.Value;
+
+        /// <summary>
+        /// Gets the event notifier.
+        /// </summary>
+        /// <returns>A <see cref="ResilientCommandEventNotifier"/>.</returns>
         public ResilientCommandEventNotifier GetEventNotifier()
         {
-            return notifier;
+            return this.notifier;
         }
 
+        /// <summary>
+        /// Sets the event notifier.
+        /// </summary>
+        /// <param name="eventNotifier">The event notifier.</param>
         public void SetEventNotifier(ResilientCommandEventNotifier eventNotifier)
         {
             this.notifier = eventNotifier;

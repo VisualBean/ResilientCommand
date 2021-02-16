@@ -1,12 +1,10 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
 {
-
     public class FailFastCommand : ResilientCommand<string>
     {
         private bool throwException;
@@ -15,14 +13,14 @@ namespace ResilientCommand.Tests
         {
             this.throwException = shouldThrow;
         }
-        protected override async Task<string> RunAsync(CancellationToken cancellationToken)
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
         {
             if (this.throwException)
             {
                 throw new TestException();
             }
 
-            return "success";
+            return Task.FromResult("success");
         }
     }
 
@@ -36,19 +34,19 @@ namespace ResilientCommand.Tests
             this.fallbackValue = fallbackValue;
             this.throwException = shouldThrow;
         }
-        protected override async Task<string> RunAsync(CancellationToken cancellationToken)
+        protected override string Fallback()
+        {
+            return fallbackValue;
+        }
+
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
         {
             if (this.throwException)
             {
                 throw new TestException();
             }
 
-            return "success";
-        }
-
-        protected override string Fallback()
-        {
-            return fallbackValue;
+            return Task.FromResult("success");
         }
     }
 
@@ -61,34 +59,21 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedInnerException(typeof(TestException))]
-        public async Task Fallback_WithDisabledFallback_FallbackIsSkippedAndThrows()
+        [ExpectedException(typeof(TestException))]
+        public async Task Command_WithoutFallback_ShouldThrow()
         {
-            var command = new FailFastWithFallbackCommand(
-                "fallback", 
-                shouldThrow: true, 
-                CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = new FallbackSettings(false)));
-
+            var command = new FailFastCommand(shouldThrow: true);
             await command.ExecuteAsync(default);
         }
 
         [TestMethod]
-        [ExpectedInnerException(typeof(TestException))]
-        public async Task Fallback_WithRuntimeFallbackDisable_FallbackIsSkippedAndThrows()
+        [ExpectedException(typeof(TestException))]
+        public async Task Fallback_WithDisabledFallback_FallbackIsSkippedAndThrows()
         {
-            var fallbackValue = "fallback";
-            var fallbackSettings = new FallbackSettings(false);
-            var configuration = CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = fallbackSettings);
-
             var command = new FailFastWithFallbackCommand(
-                fallbackValue,
+                "fallback",
                 shouldThrow: true,
-                configuration);
-
-            var result = await command.ExecuteAsync(default);
-            Assert.AreEqual(fallbackValue, result);
-
-            fallbackSettings.IsEnabled = false;
+                CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = new FallbackSettings(false)));
 
             await command.ExecuteAsync(default);
         }
@@ -105,19 +90,31 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedInnerException(typeof(TestException))]
-        public async Task Command_WithoutFallback_ShouldThrow()
-        {
-            var command = new FailFastCommand(shouldThrow: true);
-            await command.ExecuteAsync(default);
-        }
-
-
-        [TestMethod]
-        [ExpectedInnerException(typeof(TestException))]
+        [ExpectedException(typeof(TestException))]
         public async Task Fallback_WithNotImplementedFallback_ShouldThrow()
         {
             var command = new FailFastCommand(shouldThrow: true);
+
+            await command.ExecuteAsync(default);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(TestException))]
+        public async Task Fallback_WithRuntimeFallbackDisable_FallbackIsSkippedAndThrows()
+        {
+            var fallbackValue = "fallback";
+            var fallbackSettings = new FallbackSettings(false);
+            var configuration = CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = fallbackSettings);
+
+            var command = new FailFastWithFallbackCommand(
+                fallbackValue,
+                shouldThrow: true,
+                configuration);
+
+            var result = await command.ExecuteAsync(default);
+            Assert.AreEqual(fallbackValue, result);
+
+            fallbackSettings.IsEnabled = false;
 
             await command.ExecuteAsync(default);
         }

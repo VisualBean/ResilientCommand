@@ -1,8 +1,20 @@
-﻿namespace ResilientCommand
+﻿// <copyright file="CommandKey.cs" company="Visualbean">
+// Copyright (c) Visualbean. All rights reserved.
+// </copyright>
+
+namespace ResilientCommand
 {
+    /// <summary>
+    /// A Key that represents a <see cref="ResilientCommand{TResult}"/>.
+    /// </summary>
     public class CommandKey
     {
-        private string key;
+        private readonly string key;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CommandKey"/> class.
+        /// </summary>
+        /// <param name="key">The key to use.</param>
         public CommandKey(string key)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -13,26 +25,40 @@
             this.key = key;
         }
 
-        public string Key => key;
+        /// <summary>
+        /// Gets the key.
+        /// </summary>
+        /// <value>
+        /// The key.
+        /// </value>
+        public string Key => this.key;
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
-            return Equals(obj as CommandKey);
+            return this.Equals(obj as CommandKey);
         }
 
+        /// <summary>
+        /// Equalses the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>A boolean representing equality.</returns>
         public bool Equals(CommandKey key)
         {
             return key != null && this.key == key.key;
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
-            return key.GetHashCode();
+            return this.key.GetHashCode();
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
-            return key.ToString();
+            return this.key.ToString();
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
@@ -10,16 +9,31 @@ namespace ResilientCommand.Tests
     public class CollapserTests
     {
         [TestMethod]
+        public async Task Collapser_WithCollapsingDisabled_DoesNotCollapse()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+
+            int i = 0;
+            var collapser = new Collapser(cmdKey, new TestNotifier(), new CollapserSettings(isEnabled: false));
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            var result = await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+
+            result.Should().Be(4);
+        }
+
+        [TestMethod]
         public async Task Collapser_WithCollapsingEnabled_CollapsesRequest()
         {
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
 
             int i = 0;
             var collapser = new Collapser(cmdKey, new TestNotifier(), new CollapserSettings(isEnabled: true));
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            var result = await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            var result = await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
 
             result.Should().Be(1);
         }
@@ -31,30 +45,15 @@ namespace ResilientCommand.Tests
             var settings = new CollapserSettings(isEnabled: true, window: TimeSpan.FromSeconds(1));
             int i = 0;
             var collapser = new Collapser(cmdKey, new TestNotifier(), settings);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            var result = await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
+            var result = await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
             result.Should().Be(1);
 
             settings.IsEnabled = false;
-            result = await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
+            result = await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
             result.Should().Be(2);
-        }
-
-        [TestMethod]
-        public async Task Collapser_WithCollapsingDisabled_DoesNotCollapse()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-
-            int i = 0;
-            var collapser = new Collapser(cmdKey, new TestNotifier(), new CollapserSettings(isEnabled: false));
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-            var result = await collapser.ExecuteAsync(async (ct) => { i++; return i; }, default);
-
-            result.Should().Be(4);
         }
     }
 }

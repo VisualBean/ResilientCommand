@@ -1,49 +1,59 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿// <copyright file="ExecutionTimeout.cs" company="Visualbean">
+// Copyright (c) Visualbean. All rights reserved.
+// </copyright>
 
 namespace ResilientCommand
 {
-    public class ExecutionTimeout : ExecutionStrategy
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    /// <summary>
+    /// A Timeout decorator implementation.
+    /// </summary>
+    /// <seealso cref="ExecutionDecorator" />
+    public class ExecutionTimeout : ExecutionDecorator
     {
         private readonly CommandKey commandKey;
         private readonly ResilientCommandEventNotifier eventNotifier;
-        private readonly int timeoutInMiliseconds;
-        private ExecutionTimeoutSettings settings;
+        private readonly int timeoutInMilliseconds;
+        private readonly ExecutionTimeoutSettings settings;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ExecutionTimeout" /> class.
+        /// </summary>
+        /// <param name="commandKey">The command key.</param>
+        /// <param name="eventNotifier">The event notifier.</param>
+        /// <param name="settings">The settings.</param>
         public ExecutionTimeout(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, ExecutionTimeoutSettings settings = null)
         {
             this.settings = settings ?? ExecutionTimeoutSettings.DefaultExecutionTimeoutSettings;
-
-            if (this.settings.ExecutionTimeoutInMiliseconds < 0)
-            {
-                throw new ArgumentException($"{nameof(settings.ExecutionTimeoutInMiliseconds)} must be greater or equal to 0.");
-            }
-           
-            this.timeoutInMiliseconds = this.settings.ExecutionTimeoutInMiliseconds;
+            this.timeoutInMilliseconds = this.settings.ExecutionTimeoutInMilliseconds;
             this.commandKey = commandKey;
             this.eventNotifier = eventNotifier;
         }
+
+        /// <inheritdoc/>
         public override async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             if (!this.settings.IsEnabled)
             {
                 return await innerAction(cancellationToken);
             }
 
             var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            tokenSource.CancelAfter(timeoutInMiliseconds);
+            tokenSource.CancelAfter(this.timeoutInMilliseconds);
 
             var runTask = innerAction(tokenSource.Token);
-            if (await Task.WhenAny(runTask, Task.Delay(timeoutInMiliseconds)) == runTask)
+            if (await Task.WhenAny(runTask, Task.Delay(this.timeoutInMilliseconds, cancellationToken)) == runTask)
             {
                 return runTask.Result;
             }
             else
             {
-                eventNotifier.MarkEvent(ResillientCommandEventType.TimedOut, commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.TimedOut, this.commandKey);
                 throw new TimeoutException("Command timed out.");
             }
         }

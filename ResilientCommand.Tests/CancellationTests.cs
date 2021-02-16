@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading;
@@ -8,9 +7,9 @@ namespace ResilientCommand.Tests
 {
     public class CancellationCommand : ResilientCommand<string>
     {
-        protected override async Task<string> RunAsync(CancellationToken cancellationToken)
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
         {
-            return "success";
+            return Task.FromResult("success");
         }
     }
 

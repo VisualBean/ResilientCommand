@@ -1,22 +1,40 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿// <copyright file="CircuitBreakerFactory.cs" company="Visualbean">
+// Copyright (c) Visualbean. All rights reserved.
+// </copyright>
 
 namespace ResilientCommand
 {
+    using System;
+    using System.Collections.Concurrent;
+
+    /// <summary>
+    /// A factory for circuit-breakers.
+    /// </summary>
     internal sealed class CircuitBreakerFactory
     {
         private static readonly Lazy<CircuitBreakerFactory>
-            instance =
-            new Lazy<CircuitBreakerFactory>
-                (() => new CircuitBreakerFactory());
+            Instance =
+            new Lazy<CircuitBreakerFactory>(
+                () => new CircuitBreakerFactory());
 
-        private ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>> circuitBreakerByGroup = new ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>>();
+        private readonly ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>> circuitBreakerByGroup = new ConcurrentDictionary<CommandKey, Lazy<CircuitBreaker>>();
 
-        internal static CircuitBreakerFactory GetInstance() => instance.Value;
+        /// <summary>
+        /// Gets the instance.
+        /// </summary>
+        /// <returns>A <see cref="CircuitBreakerFactory"/> instance.</returns>
+        internal static CircuitBreakerFactory GetInstance() => Instance.Value;
 
+        /// <summary>
+        /// Gets or creates a circuit breaker.
+        /// </summary>
+        /// <param name="commandKey">The command key.</param>
+        /// <param name="eventNotifier">The event notifier.</param>
+        /// <param name="circuitBreakerSettings">The circuit breaker settings.</param>
+        /// <returns>A <see cref="CircuitBreaker"/>.</returns>
         internal CircuitBreaker GetOrCreateCircuitBreaker(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CircuitBreakerSettings circuitBreakerSettings)
         {
-            return circuitBreakerByGroup.GetOrAdd(commandKey, new Lazy<CircuitBreaker>(() => new CircuitBreaker(commandKey, eventNotifier, circuitBreakerSettings))).Value;
+            return this.circuitBreakerByGroup.GetOrAdd(commandKey, new Lazy<CircuitBreaker>(() => new CircuitBreaker(commandKey, eventNotifier, circuitBreakerSettings))).Value;
         }
     }
 }
