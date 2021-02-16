@@ -13,58 +13,31 @@ namespace ResilientCommand.Tests
         public CircuitBreakerCommand(CommandKey key, bool shouldThrow) : base(
             commandKey: key,
             configuration: CommandConfiguration.CreateConfiguration(
-                c => c.CircuitBreakerSettings = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2)))
+                c => c.CircuitBreakerSettings = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2)))
         {
             this.shouldThrow = shouldThrow;
-        }
-
-        
-        protected async override Task<string> RunAsync(CancellationToken cancellationToken)
-        {
-            if (shouldThrow)
-            {
-                throw new TestException();
-            }
-
-            return "success";
         }
 
         protected override string Fallback()
         {
             return "fallback";
         }
+
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            if (shouldThrow)
+            {
+                throw new TestException();
+            }
+
+            return Task.FromResult("success");
+        }
     }
 
     [TestClass]
     public class CircuitBreakerTests
     {
-        static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2);
-
-        static CommandConfiguration circuitBreakerConfiguration = CommandConfiguration.CreateConfiguration(config =>
-        {
-            config.CircuitBreakerSettings = SmallCircuitBreaker;
-        });
-
-        [TestMethod]
-        public async Task CircuitBreaker_WithNoFailures_ReturnsResult()
-        {
-            var value = "Test";
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
-            var response = await circuitBreaker.ExecuteAsync((ct) => Task.FromResult(value), default);
-
-            response.Should().Be(value);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(TestException))]
-        public async Task CircuitBreaker_WithFailureWithinCircuitBreaker_DoesNotSwallowException()
-        {
-            
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
-            await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
-        }
+        static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2);
 
         [TestMethod]
         [ExpectedException(typeof(CircuitBrokenException))]
@@ -78,11 +51,68 @@ namespace ResilientCommand.Tests
             {
                 await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Assert.IsTrue(ex is TestException);
-                await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default); 
+                await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
             }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(TestException))]
+        public async Task CircuitBreaker_WithFailuresWithDisabledCircuit_DoesNotTripCircuit()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var circuit = new CircuitBreaker(cmdKey, new TestNotifier(), settings: new CircuitBreakerSettings(isEnabled: false, failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2));
+
+            await circuit.ExecuteAsync<string>((ct) => throw new TestException());
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(TestException))]
+        public async Task CircuitBreaker_WithFailureWithinCircuitBreaker_DoesNotSwallowException()
+        {
+
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
+            await circuitBreaker.ExecuteAsync<string>((ct) => throw new TestException(), default);
+        }
+
+        [TestMethod]
+        public async Task CircuitBreaker_WithNoFailures_ReturnsResult()
+        {
+            var value = "Test";
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var circuitBreaker = new CircuitBreaker(cmdKey, new TestNotifier(), SmallCircuitBreaker);
+            var response = await circuitBreaker.ExecuteAsync((ct) => Task.FromResult(value), default);
+
+            response.Should().Be(value);
+        }
+
+        [TestMethod]
+        public async Task CircuitBreaker_WithRuntimeDisabledCircuit_DoesNotThrow()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var settings = new CircuitBreakerSettings(isEnabled: false, failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2);
+            var circuit = new CircuitBreaker(cmdKey, new TestNotifier(), settings);
+            try
+            {
+                await circuit.ExecuteAsync<int>((ct) => throw new TestException());
+            }
+            catch
+            {
+                try
+                {
+                    await circuit.ExecuteAsync<int>((ct) => throw new TestException());
+                }
+                catch
+                {
+                }
+            }
+
+            settings.IsEnabled = false;
+            await circuit.ExecuteAsync<int>((ct) => { return Task.FromResult(1); });
+
         }
 
         [TestMethod]
@@ -125,42 +155,6 @@ namespace ResilientCommand.Tests
             var response = await command2.ExecuteAsync(default); // Should go directly to fallback.
 
             Assert.AreEqual(fallbackValue, response);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(TestException))]
-        public async Task CircuitBreaker_WithFailuresWithDisabledCircuit_DoesNotTripCircuit()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var circuit = new CircuitBreaker(cmdKey, new TestNotifier(), settings: new CircuitBreakerSettings(isEnabled: false, failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2));
-
-            await circuit.ExecuteAsync<string>((ct) => throw new TestException());
-        }
-
-        [TestMethod]
-        public async Task CircuitBreaker_WithRuntimeDisabledCircuit_DoesNotThrow()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var settings = new CircuitBreakerSettings(isEnabled: false, failureThreshhold: 0.1, samplingDurationMiliseconds: int.MaxValue, minimumThroughput: 2);
-            var circuit = new CircuitBreaker(cmdKey, new TestNotifier(), settings);
-            try
-            {
-                await circuit.ExecuteAsync<int>((ct) => throw new TestException());
-            }
-            catch
-            {
-                try
-                {
-                    await circuit.ExecuteAsync<int>((ct) => throw new TestException());
-                }
-                catch
-                {
-                }
-            }
-
-            settings.IsEnabled = false;
-            await circuit.ExecuteAsync<int>(async (ct) => { return 1; });
-            
         }
     }
 }

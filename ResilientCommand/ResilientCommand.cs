@@ -1,12 +1,21 @@
-using System;
-using System.Collections.Concurrent;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+// <copyright file="ResilientCommand.cs" company="Visualbean">
+// Copyright (c) Visualbean. All rights reserved.
+// </copyright>
 
 namespace ResilientCommand
 {
-    public abstract class ResilientCommand<TResult> where TResult : class
+    using System;
+    using System.Collections.Concurrent;
+    using System.Reflection;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    /// <summary>
+    /// An abstract command.
+    /// </summary>
+    /// <typeparam name="TResult">The type of the result.</typeparam>
+    public abstract class ResilientCommand<TResult>
+        where TResult : class
     {
         private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
         private readonly CircuitBreaker circuitBreaker;
@@ -18,50 +27,64 @@ namespace ResilientCommand
         private readonly ICache resultCache;
         private readonly SemaphoreSlim semaphore;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ResilientCommand{TResult}"/> class.
+        /// </summary>
+        /// <param name="commandKey">The command key.</param>
+        /// <param name="circuitBreaker">The circuit breaker.</param>
+        /// <param name="executionTimeout">The execution timeout.</param>
+        /// <param name="collapser">The collapser.</param>
+        /// <param name="cache">The cache.</param>
+        /// <param name="configuration">The configuration.</param>
         public ResilientCommand(
-            CommandKey commandKey = null, 
-            CircuitBreaker circuitBreaker = null, 
-            ExecutionTimeout executionTimeout = null, 
-            Collapser collapser = null, 
-            ICache cache = null, 
+            CommandKey commandKey = null,
+            CircuitBreaker circuitBreaker = null,
+            ExecutionTimeout executionTimeout = null,
+            Collapser collapser = null,
+            ICache cache = null,
             CommandConfiguration configuration = null)
         {
-            this.commandKey = commandKey ?? new CommandKey(GetType().Name);
+            this.commandKey = commandKey ?? new CommandKey(this.GetType().Name);
             this.configuration = configuration ?? CommandConfiguration.CreateConfiguration();
 
-            eventNotifier = InitEventNotifier();
-            this.circuitBreaker = InitCircuitBreaker(circuitBreaker);
-            this.executionTimeout = InitExecutionTimeout(executionTimeout);
-            semaphore = InitSemaphore();
-            this.collapser = InitCollapser(collapser);
-            this.resultCache = InitCache(cache);
+            this.eventNotifier = this.InitEventNotifier();
+            this.circuitBreaker = this.InitCircuitBreaker(circuitBreaker);
+            this.executionTimeout = this.InitExecutionTimeout(executionTimeout);
+            this.semaphore = this.InitSemaphore();
+            this.collapser = this.InitCollapser(collapser);
+            this.resultCache = this.InitCache(cache);
         }
 
-        private bool IsCachedResponseEnabled => GetCacheKey() != null;
+        private bool IsCachedResponseEnabled => this.GetCacheKey() != null;
 
+        /// <summary>Executes <see cref="RunAsync(CancellationToken)"/> and wraps it in the enabled features.</summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>
+        ///   A task.
+        /// </returns>
         public async Task<TResult> ExecuteAsync(CancellationToken cancellationToken)
         {
-            string cacheKey = $"{commandKey}_{GetCacheKey()}";
+            string cacheKey = $"{this.commandKey}_{this.GetCacheKey()}";
 
             TResult result;
-            if (IsCachedResponseEnabled && resultCache.TryGet(cacheKey, out result))
+            if (this.IsCachedResponseEnabled && this.resultCache.TryGet(cacheKey, out result))
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.ResponseFromCache, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.ResponseFromCache, this.commandKey);
                 return result;
             }
 
             try
             {
-                await semaphore.WaitAsync();
+                await this.semaphore.WaitAsync();
 
-                result = await WrappedExecutionAsync(cancellationToken);
+                result = await this.WrappedExecutionAsync(cancellationToken);
 
-                if (IsCachedResponseEnabled)
+                if (this.IsCachedResponseEnabled)
                 {
-                    resultCache.TryAdd(cacheKey, result);
+                    this.resultCache.TryAdd(cacheKey, result);
                 }
 
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.Success, commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.Success, this.commandKey);
                 return result;
             }
             catch (Exception ex)
@@ -69,22 +92,22 @@ namespace ResilientCommand
                 switch (ex)
                 {
                     default:
-                        this.eventNotifier.MarkEvent(ResillientCommandEventType.Failure, this.commandKey);
+                        this.eventNotifier.RaiseEvent(ResilientCommandEventType.Failure, this.commandKey);
                         break;
                 }
 
-                return HandleFallback(ex);
+                return this.HandleFallback(ex);
             }
             finally
             {
-                semaphore.Release();
+                this.semaphore.Release();
             }
         }
 
         /// <summary>
         /// Override this to enable fallback.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A fallback result.</returns>
         protected virtual TResult Fallback()
         {
             throw new NotImplementedException();
@@ -94,37 +117,37 @@ namespace ResilientCommand
         /// Override this to enable caching.
         /// The cache will be per <see cref="CommandKey"/>.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A cache-key.</returns>
         protected virtual string GetCacheKey()
         {
             return null;
         }
 
         /// <summary>
-        /// Task to run as a ResilientCommand.
+        /// The inner task to be run as part of <see cref="ExecuteAsync(CancellationToken)"/>.
         /// </summary>
         /// <remarks>
-        /// In order for the CircuitBreaker to work, please re-throw any exceptions
+        /// In order for the CircuitBreaker to work, please re-throw any exceptions.
         /// </remarks>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="cancellationToken">A cancellationToken.</param>
+        /// <returns>A Task.</returns>
         protected abstract Task<TResult> RunAsync(CancellationToken cancellationToken);
 
         private TResult HandleFallback(Exception innerException)
         {
             if (!this.configuration.FallbackSettings.IsEnabled)
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackDisabled, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.FallbackDisabled, this.commandKey);
                 throw innerException;
             }
 
-            if (!HasFallback())
+            if (!this.HasFallback())
             {
-                this.eventNotifier.MarkEvent(ResillientCommandEventType.FallbackMissing, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.FallbackMissing, this.commandKey);
                 throw innerException;
             }
 
-            return Fallback();
+            return this.Fallback();
         }
 
         private bool HasFallback()
@@ -134,7 +157,7 @@ namespace ResilientCommand
                 return hasFallback;
             }
 
-            var methodInfo = GetType().GetMethod(nameof(Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
+            var methodInfo = this.GetType().GetMethod(nameof(this.Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
             hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
 
             ContainsFallback.TryAdd(this.commandKey, hasFallback);
@@ -143,8 +166,8 @@ namespace ResilientCommand
         }
 
         private ICache InitCache(ICache cache)
-        {   
-            if (IsCachedResponseEnabled)
+        {
+            if (this.IsCachedResponseEnabled)
             {
                 return cache ?? new InMemoryCache();
             }
@@ -189,33 +212,34 @@ namespace ResilientCommand
 
         private SemaphoreSlim InitSemaphore()
         {
-            return SemaphoreFactory.GetOrCreateSemaphore(commandKey, this.configuration.MaxParallelism);
+            return SemaphoreFactory.GetOrCreateSemaphore(this.commandKey, this.configuration.MaxParallelism);
         }
+
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
             Task<TResult> collapsedTask = null;
             if (this.configuration.CollapserSettings.IsEnabled)
             {
-                collapsedTask = collapser.ExecuteAsync(RunAsync, cancellationToken);
+                collapsedTask = this.collapser.ExecuteAsync(this.RunAsync, cancellationToken);
             }
 
             Task<TResult> timeoutTask = null;
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
             {
-                timeoutTask = executionTimeout.ExecuteAsync(
-                    innerAction: (ct) => collapsedTask ?? RunAsync(ct), 
+                timeoutTask = this.executionTimeout.ExecuteAsync(
+                    innerAction: (ct) => collapsedTask ?? this.RunAsync(ct),
                     cancellationToken);
             }
 
             Task<TResult> circuitBreakerTask = null;
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
             {
-                circuitBreakerTask = circuitBreaker.ExecuteAsync(
-                    innerAction: (ct) => timeoutTask ?? RunAsync(ct), 
+                circuitBreakerTask = this.circuitBreaker.ExecuteAsync(
+                    innerAction: (ct) => timeoutTask ?? this.RunAsync(ct),
                     cancellationToken);
             }
 
-            Task<TResult> resultTask = circuitBreakerTask ?? timeoutTask ?? collapsedTask ?? RunAsync(cancellationToken);
+            Task<TResult> resultTask = circuitBreakerTask ?? timeoutTask ?? collapsedTask ?? this.RunAsync(cancellationToken);
 
             return await resultTask;
         }

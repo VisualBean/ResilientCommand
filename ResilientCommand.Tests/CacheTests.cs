@@ -9,32 +9,6 @@ using System.Linq;
 
 namespace ResilientCommand.Tests
 {
-    class FailingCacheCommand : ResilientCommand<string>
-    {
-        private readonly string fallbackValue;
-        public int Count = 0;
-
-        public FailingCacheCommand(CommandKey cmdKey, string fallbackValue = null) : base(cmdKey)
-        {
-            this.fallbackValue = fallbackValue;
-        }
-
-        protected override string Fallback()
-        {
-            return fallbackValue ?? "fallback";
-        }
-
-        protected override string GetCacheKey()
-        {
-            return "Key";
-        }
-
-        protected async override Task<string> RunAsync(CancellationToken cancellationToken)
-        {
-            throw new TestException();
-        }
-    }
-
     public class CacheCommand : ResilientCommand<string>
     {
         public CacheCommand(CommandKey cmdKey) : base(cmdKey)
@@ -46,9 +20,9 @@ namespace ResilientCommand.Tests
             return "Key";
         }
 
-        protected async override Task<string> RunAsync(CancellationToken cancellationToken)
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
         {
-            return "test";
+            return Task.FromResult("test");
         }
     }
 
@@ -56,19 +30,6 @@ namespace ResilientCommand.Tests
     public class CacheTests
     {
         private TestNotifier notifier;
-
-        [TestMethod]
-        public async Task Command_WithCacheKey_OnlyCallsRunAsyncOnce()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var mock = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
-            var command = mock.Object;
-
-            await command.ExecuteAsync(default);
-            await command.ExecuteAsync(default);
-
-            mock.Protected().Verify("RunAsync", Times.Once(), ItExpr.IsAny<CancellationToken>());
-        }
 
         [TestMethod]
         public async Task Command_WithCacheKey_CachesResult()
@@ -91,9 +52,21 @@ namespace ResilientCommand.Tests
             response.Should().Be("1");
             response.Should().Be(response2);
 
-            notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.ResponseFromCache);
+            notifier.events[cmdKey].Should().Contain(ResilientCommandEventType.ResponseFromCache);
         }
 
+        [TestMethod]
+        public async Task Command_WithCacheKey_OnlyCallsRunAsyncOnce()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var mock = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
+            var command = mock.Object;
+
+            await command.ExecuteAsync(default);
+            await command.ExecuteAsync(default);
+
+            mock.Protected().Verify("RunAsync", Times.Once(), ItExpr.IsAny<CancellationToken>());
+        }
         [TestMethod]
         public async Task Command_WithCacheKeyInDifferentGroup_DoesNotReturnCachedResult()
         {
@@ -103,16 +76,18 @@ namespace ResilientCommand.Tests
 
             var mock = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
             mock.Protected().Setup<Task<string>>("RunAsync", ItExpr.IsAny<CancellationToken>())
-                .Returns(() => { 
-                    count++; 
-                    return Task.FromResult(count.ToString()); 
+                .Returns(() =>
+                {
+                    count++;
+                    return Task.FromResult(count.ToString());
                 });
 
             var mock2 = new Mock<CacheCommand>(cmdKey2) { CallBase = true, };
             mock2.Protected().Setup<Task<string>>("RunAsync", ItExpr.IsAny<CancellationToken>())
-                .Returns(() => { 
-                    count++; 
-                    return Task.FromResult(count.ToString()); 
+                .Returns(() =>
+                {
+                    count++;
+                    return Task.FromResult(count.ToString());
                 });
 
             var command = mock.Object;
@@ -127,28 +102,8 @@ namespace ResilientCommand.Tests
             mock.Protected().Verify("RunAsync", Times.Once(), ItExpr.IsAny<CancellationToken>());
             mock2.Protected().Verify("RunAsync", Times.Once(), ItExpr.IsAny<CancellationToken>());
 
-            notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.ResponseFromCache);
-            notifier.events[cmdKey2].Should().NotContain(ResillientCommandEventType.ResponseFromCache);
-        }
-
-        [TestMethod]
-        public async Task Command_WithCacheKeyInSameGroup_OnlyCallsRunAsyncOnce()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-
-            var mock = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
-            var mock2 = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
-
-            var command = mock.Object;
-            var command2 = mock2.Object;
-
-            await command.ExecuteAsync(default);
-            await command.ExecuteAsync(default); // Should be cached result
-            await command2.ExecuteAsync(default); // Should be cached result
-
-            notifier.events[cmdKey].Where(e => e == ResillientCommandEventType.ResponseFromCache).Should().HaveCount(2);
-            mock.Protected().Verify("RunAsync", Times.Once(), ItExpr.IsAny<CancellationToken>());
-            mock2.Protected().Verify("RunAsync", Times.Never(), ItExpr.IsAny<CancellationToken>());
+            notifier.events[cmdKey].Should().Contain(ResilientCommandEventType.ResponseFromCache);
+            notifier.events[cmdKey2].Should().NotContain(ResilientCommandEventType.ResponseFromCache);
         }
 
         [TestMethod]
@@ -181,9 +136,28 @@ namespace ResilientCommand.Tests
             response2.Should().Be("1");
             response2.Should().Be(response);
 
-            notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.ResponseFromCache);
+            notifier.events[cmdKey].Should().Contain(ResilientCommandEventType.ResponseFromCache);
         }
 
+        [TestMethod]
+        public async Task Command_WithCacheKeyInSameGroup_OnlyCallsRunAsyncOnce()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+
+            var mock = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
+            var mock2 = new Mock<CacheCommand>(cmdKey) { CallBase = true, };
+
+            var command = mock.Object;
+            var command2 = mock2.Object;
+
+            await command.ExecuteAsync(default);
+            await command.ExecuteAsync(default); // Should be cached result
+            await command2.ExecuteAsync(default); // Should be cached result
+
+            notifier.events[cmdKey].Where(e => e == ResilientCommandEventType.ResponseFromCache).Should().HaveCount(2);
+            mock.Protected().Verify("RunAsync", Times.Once(), ItExpr.IsAny<CancellationToken>());
+            mock2.Protected().Verify("RunAsync", Times.Never(), ItExpr.IsAny<CancellationToken>());
+        }
         [TestMethod]
         public async Task Command_Withfallback_FallbackIsNotCached()
         {
@@ -199,8 +173,8 @@ namespace ResilientCommand.Tests
             response.Should().Be(fallbackValue);
             response2.Should().Be(fallbackValue);
 
-            notifier.events[cmdKey].Should().Contain(ResillientCommandEventType.Failure);
-            notifier.events[cmdKey].Should().NotContain(ResillientCommandEventType.ResponseFromCache);
+            notifier.events[cmdKey].Should().Contain(ResilientCommandEventType.Failure);
+            notifier.events[cmdKey].Should().NotContain(ResilientCommandEventType.ResponseFromCache);
         }
 
         [TestInitialize]
@@ -208,6 +182,31 @@ namespace ResilientCommand.Tests
         {
             EventNotifierFactory.GetInstance().SetEventNotifier(new TestNotifier());
             this.notifier = EventNotifierFactory.GetInstance().GetEventNotifier() as TestNotifier;
+        }
+    }
+
+    class FailingCacheCommand : ResilientCommand<string>
+    {
+        public int Count = 0;
+        private readonly string fallbackValue;
+        public FailingCacheCommand(CommandKey cmdKey, string fallbackValue = null) : base(cmdKey)
+        {
+            this.fallbackValue = fallbackValue;
+        }
+
+        protected override string Fallback()
+        {
+            return fallbackValue ?? "fallback";
+        }
+
+        protected override string GetCacheKey()
+        {
+            return "Key";
+        }
+
+        protected override Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            throw new TestException();
         }
     }
 }

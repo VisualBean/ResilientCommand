@@ -8,26 +8,9 @@ namespace ResilientCommand.Tests
     public class TimeoutTests
     {
         [TestMethod]
-        [ExpectedException(typeof(TimeoutException))]
-        public async Task Timeout_WithSlowRun_ThrowsTimeoutException()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(executionTimeoutInMiliseconds: 1));
-            await timeout.ExecuteAsync<int>(async (ct) => { await Task.Delay(10); return 1; }, default);
-        }
-
-        [TestMethod]
-        public async Task Timeout_WithTimeoutDisabled_NoTimeoutIsExecuted()
-        {
-            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
-            var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(isEnabled: false, executionTimeoutInMiliseconds: 1));
-            await timeout.ExecuteAsync(async (ct) => Task.Delay(10), default);
-        }
-
-        [TestMethod]
         public async Task Timeout_WithRunTimeDisable_NoTimeoutIsExecuted()
         {
-            var settings = new ExecutionTimeoutSettings(executionTimeoutInMiliseconds: 1);
+            var settings = new ExecutionTimeoutSettings(executionTimeoutInMilliseconds: 1);
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
             var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), settings);
 
@@ -40,6 +23,23 @@ namespace ResilientCommand.Tests
                 settings.IsEnabled = false;
                 await timeout.ExecuteAsync<int>(async (ct) => { await Task.Delay(5); return 1; }, default);
             }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(TimeoutException))]
+        public async Task Timeout_WithSlowRun_ThrowsTimeoutException()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(executionTimeoutInMilliseconds: 1));
+            await timeout.ExecuteAsync<int>(async (ct) => { await Task.Delay(10); return 1; }, default);
+        }
+
+        [TestMethod]
+        public async Task Timeout_WithTimeoutDisabled_NoTimeoutIsExecuted()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(isEnabled: false, executionTimeoutInMilliseconds: 1));
+            await timeout.ExecuteAsync(async (ct) => { await Task.Delay(10); return 1;}, default);
         }
     }
 }

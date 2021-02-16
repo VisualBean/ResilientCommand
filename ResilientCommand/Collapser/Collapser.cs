@@ -1,19 +1,36 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿// <copyright file="Collapser.cs" company="Visualbean">
+// Copyright (c) Visualbean. All rights reserved.
+// </copyright>
 
 namespace ResilientCommand
 {
-    public class Collapser : ExecutionStrategy
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    /// <summary>
+    /// A collapser implementation.
+    /// </summary>
+    /// <remarks>
+    /// It de-bounces requests based on a time-window.
+    /// </remarks>
+    /// <seealso cref="ResilientCommand.ExecutionDecorator" />
+    public class Collapser : ExecutionDecorator
     {
-        private SemaphoreSlim semaphore = new SemaphoreSlim(1);
-        private CommandKey commandKey;
-        private long windowInTicks;
-        private ResilientCommandEventNotifier eventNotifier;
         private readonly CollapserSettings settings;
+        private CommandKey commandKey;
+        private ResilientCommandEventNotifier eventNotifier;
         private object lastResult;
         private long nextRun;
+        private SemaphoreSlim semaphore = new SemaphoreSlim(1);
+        private long windowInTicks;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Collapser" /> class.
+        /// </summary>
+        /// <param name="commandKey">The command key.</param>
+        /// <param name="eventNotifier">The event notifier.</param>
+        /// <param name="settings">The settings.</param>
         public Collapser(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CollapserSettings settings)
         {
             this.settings = settings ?? CollapserSettings.DefaultCollapserSettings;
@@ -23,6 +40,7 @@ namespace ResilientCommand
             this.eventNotifier = eventNotifier;
         }
 
+        /// <inheritdoc/>
         public override async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -36,22 +54,22 @@ namespace ResilientCommand
 
             try
             {
-                await semaphore.WaitAsync(cancellationToken);
+                await this.semaphore.WaitAsync(cancellationToken);
 
-                if (requested <= nextRun)
+                if (requested <= this.nextRun)
                 {
-                    this.eventNotifier.MarkEvent(ResillientCommandEventType.Collapsed, this.commandKey);
+                    this.eventNotifier.RaiseEvent(ResilientCommandEventType.Collapsed, this.commandKey);
                     return (TResult)this.lastResult;
                 }
 
                 this.lastResult = await innerAction(cancellationToken);
 
-                this.nextRun = Math.Max(requested + windowInTicks, DateTime.UtcNow.Ticks);
-                return (TResult)lastResult;
+                this.nextRun = Math.Max(requested + this.windowInTicks, DateTime.UtcNow.Ticks);
+                return (TResult)this.lastResult;
             }
             finally
             {
-                semaphore.Release();
+                this.semaphore.Release();
             }
         }
     }
