@@ -8,7 +8,7 @@ namespace ResilientCommand.Tests
 {
     public class CircuitBreakerCommand : ResilientCommand<string>
     {
-        private bool shouldThrow;
+        private readonly bool shouldThrow;
 
         public CircuitBreakerCommand(CommandKey key, bool shouldThrow) : base(
             commandKey: key,
@@ -37,7 +37,7 @@ namespace ResilientCommand.Tests
     [TestClass]
     public class CircuitBreakerTests
     {
-        static CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2);
+        static readonly CircuitBreakerSettings SmallCircuitBreaker = new CircuitBreakerSettings(failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2);
 
         [TestMethod]
         [ExpectedException(typeof(CircuitBrokenException))]

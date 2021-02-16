@@ -74,7 +74,7 @@ namespace ResilientCommand
 
             try
             {
-                await this.semaphore.WaitAsync();
+                await this.semaphore.WaitAsync(cancellationToken);
 
                 result = await this.WrappedExecutionAsync(cancellationToken);
 

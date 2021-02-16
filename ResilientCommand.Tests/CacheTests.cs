@@ -180,7 +180,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestInitialize]
-        public void init()
+        public void Init()
         {
             EventNotifierFactory.GetInstance().SetEventNotifier(new TestNotifier());
             this.notifier = EventNotifierFactory.GetInstance().GetEventNotifier() as TestNotifier;

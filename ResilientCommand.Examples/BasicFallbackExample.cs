@@ -21,7 +21,7 @@ namespace ResilientCommand.Examples
 
     class BasicFallbackExample
     {
-        static async Task FallbackExample(string[] args)
+        static async Task FallbackExample()
         {
             // Set notifier to use consolenotifier.
             EventNotifierFactory.GetInstance().SetEventNotifier(new ConsoleEventNotifier());

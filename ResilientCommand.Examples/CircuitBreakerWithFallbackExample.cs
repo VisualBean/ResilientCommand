@@ -7,7 +7,7 @@ namespace ResilientCommand.Examples
 
     class BasicCircuitBreakerWithFallbackExample
     {
-        static async Task FallbackExample(string[] args)
+        static async Task FallbackExample()
         {
             // Set notifier to use consolenotifier.
             EventNotifierFactory.GetInstance().SetEventNotifier(new ConsoleEventNotifier());

@@ -5,7 +5,7 @@ namespace ResilientCommand.Tests
 {
     public class ExpectedInnerExceptionAttribute : ExpectedExceptionBaseAttribute
     {
-        private Type expectedInnerExceptionType;
+        private readonly Type expectedInnerExceptionType;
 
         public ExpectedInnerExceptionAttribute(Type expectedInnerExceptionType)
         {
