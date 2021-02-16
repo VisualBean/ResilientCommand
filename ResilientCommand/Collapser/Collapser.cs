@@ -4,18 +4,7 @@
 
 namespace ResilientCommand
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-
-    /// <summary>
-    /// A collapser implementation.
-    /// </summary>
-    /// <remarks>
-    /// It de-bounces requests based on a time-window.
-    /// </remarks>
-    /// <seealso cref="ExecutionDecorator" />
-    public class Collapser : ExecutionDecorator
+    public class Collapser : ExecutionStrategy
     {
         private readonly CommandKey commandKey;
         private readonly ResilientCommandEventNotifier eventNotifier;
@@ -24,6 +13,8 @@ namespace ResilientCommand
         private readonly long windowInTicks;
         private object lastResult;
         private long nextRun;
+        private SemaphoreSlim semaphore = new SemaphoreSlim(1);
+        private long windowInTicks;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Collapser" /> class.
