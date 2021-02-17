@@ -15,7 +15,6 @@ namespace ResilientCommand
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
     public abstract class ResilientCommand<TResult>
-        where TResult : class
     {
         private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
         private readonly CircuitBreaker circuitBreaker;
@@ -64,7 +63,7 @@ namespace ResilientCommand
         /// </returns>
         public async Task<TResult> ExecuteAsync(CancellationToken cancellationToken)
         {
-            string cacheKey = $"{this.commandKey}_{this.GetCacheKey()}";
+            string cacheKey = this.GetCacheKey();
 
             if (this.IsCachedResponseEnabled && this.resultCache.TryGet(cacheKey, out TResult result))
             {
@@ -166,12 +165,7 @@ namespace ResilientCommand
 
         private ICache InitCache(ICache cache)
         {
-            if (this.IsCachedResponseEnabled)
-            {
-                return cache ?? new InMemoryCache();
-            }
-
-            return null;
+            return cache ?? new InMemoryCache();
         }
 
         private CircuitBreaker InitCircuitBreaker(CircuitBreaker circuitBreaker)

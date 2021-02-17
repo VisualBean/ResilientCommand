@@ -76,10 +76,14 @@ namespace ResilientCommand
                 throw new ArgumentException("Key must not be null or empty.", nameof(key));
             }
 
-            var result = ResultCache.TryGetValue(key, out object innerValue);
+            if (ResultCache.TryGetValue(key, out object innerValue))
+            {
+                value = (T)innerValue;
+                return true;
+            }
 
-            value = (T)innerValue;
-            return result;
+            value = default(T);
+            return false;
         }
     }
 }
