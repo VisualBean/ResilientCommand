@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand.Examples
 {
-    class BasicCachingCommand : ResilientCommand<string>
+    class BasicCachingCommand : ResilientCommand<int>
     {
         static int count;
         protected override string GetCacheKey()
@@ -12,10 +12,10 @@ namespace ResilientCommand.Examples
             return "key";
         }
 
-        protected override Task<string> RunAsync(CancellationToken cancellationToken)
+        protected override Task<int> RunAsync(CancellationToken cancellationToken)
         {
             count++;
-            return Task.FromResult(count.ToString());
+            return Task.FromResult(count);
         }
     }
 
