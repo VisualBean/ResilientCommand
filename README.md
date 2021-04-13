@@ -7,5 +7,5 @@ The idea is simple; protect against up/down- stream problems, by encapsulating c
 This project seeks to do just that. 
 
 Please check the [wiki](https://github.com/VisualBean/ResilientCommand/wiki) for more information
-or the [examples](https://github.com/VisualBean/ResilientCommand/tree/main/ResilientCommand.Example) some usage examples.
+or the [examples](https://github.com/VisualBean/ResilientCommand/tree/main/ResilientCommand.Examples) some usage examples.
 
