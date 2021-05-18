@@ -17,7 +17,8 @@ namespace ResilientCommand
     public abstract class ResilientCommand<TResult>
     {
         private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
-        private static readonly NoOpExecution NoOpExecution = new ();
+        private static readonly IExecutionPolicy NoOpExecution = new NoOpExecution();
+
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
         private readonly CommandKey commandKey;
