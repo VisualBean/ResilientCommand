@@ -44,10 +44,12 @@ namespace ResilientCommand.Examples
 
     class MyBasicCircuitBreakerFallCommand : ResilientCommand<string>
     {
-        public MyBasicCircuitBreakerFallCommand() : base(configuration: CommandConfiguration.CreateConfiguration(config =>
+        public MyBasicCircuitBreakerFallCommand() : base(
+            configuration: CommandConfiguration.CreateConfiguration(config =>
         {
             // Setup circuitbreaker to be broken after 2 tries and 10% failures.
-            config.CircuitBreakerSettings = new CircuitBreakerSettings(failureThreshhold: 0.1, minimumThroughput: 2);
+            config.CircuitBreakerSettings = new CircuitBreakerSettings(failureThreshhold: 0.1,
+                                                                       minimumThroughput: 2);
         }))
         {
         }

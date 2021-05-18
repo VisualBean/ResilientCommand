@@ -84,7 +84,7 @@ namespace ResilientCommand
                 this.eventNotifier.RaiseEvent(ResilientCommandEventType.Success, this.commandKey);
                 return result;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is ResilientCommandException))
             {
                 switch (ex)
                 {
@@ -205,21 +205,21 @@ namespace ResilientCommand
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
-            IExecutionPolicy collapserWrapper = NoOpExecution;
+            ExecutionDecorator collapserWrapper = NoOpExecution;
             if (this.collapser != null)
             {
                 collapserWrapper = this.collapser;
             }
 
-            IExecutionPolicy timeoutWrapper = NoOpExecution;
+            ExecutionDecorator timeoutWrapper = NoOpExecution;
             if (this.executionTimeout != null)
             {
                 timeoutWrapper = this.executionTimeout.Wrap(collapserWrapper);
             }
 
-            IExecutionPolicy semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
+            ExecutionDecorator semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
 
-            IExecutionPolicy circuitBreakerWrapper = NoOpExecution;
+            ExecutionDecorator circuitBreakerWrapper = NoOpExecution;
             if (this.circuitBreaker != null)
             {
                 circuitBreakerWrapper = this.circuitBreaker.Wrap(semaphoreWrapper);
