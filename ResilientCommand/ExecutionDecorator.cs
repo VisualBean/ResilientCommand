@@ -11,7 +11,7 @@ namespace ResilientCommand
     /// <summary>
     /// An abstract class representing an ExecutionStrategy.
     /// </summary>
-    public abstract class ExecutionDecorator
+    public abstract class ExecutionDecorator : IExecutionPolicy
     {
         /// <summary>
         /// Executes the asynchronous.
@@ -28,7 +28,7 @@ namespace ResilientCommand
         /// <param name="inner">The inner.</param>
         /// <returns>A wrapper.</returns>
         /// <exception cref="ArgumentNullException">nameof(inner).</exception>
-        internal Wrapper Wrap(ExecutionDecorator inner)
+        internal Wrapper Wrap(IExecutionPolicy inner)
         {
             if (inner is null)
             {

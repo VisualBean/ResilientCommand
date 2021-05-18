@@ -17,19 +17,19 @@ namespace ResilientCommand
         /// <summary>
         /// The inner decorator.
         /// </summary>
-        private readonly ExecutionDecorator inner;
+        private readonly IExecutionPolicy inner;
 
         /// <summary>
         /// The outer decotartor.
         /// </summary>
-        private readonly ExecutionDecorator outer;
+        private readonly IExecutionPolicy outer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Wrapper"/> class.
         /// </summary>
         /// <param name="outer">The outer.</param>
         /// <param name="inner">The inner.</param>
-        public Wrapper(ExecutionDecorator outer, ExecutionDecorator inner)
+        public Wrapper(IExecutionPolicy outer, IExecutionPolicy inner)
         {
             this.outer = outer;
             this.inner = inner;
@@ -61,8 +61,8 @@ namespace ResilientCommand
         internal static async Task<TResult> ExecuteAsync<TResult>(
           Func<CancellationToken, Task<TResult>> func,
           CancellationToken cancellationToken,
-          ExecutionDecorator outer,
-          ExecutionDecorator inner)
+          IExecutionPolicy outer,
+          IExecutionPolicy inner)
            => await outer.ExecuteAsync(
                async (ct) => await inner.ExecuteAsync(
                    func,

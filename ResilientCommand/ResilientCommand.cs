@@ -205,21 +205,21 @@ namespace ResilientCommand
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
-            ExecutionDecorator collapserWrapper = NoOpExecution;
+            IExecutionPolicy collapserWrapper = NoOpExecution;
             if (this.collapser != null)
             {
                 collapserWrapper = this.collapser;
             }
 
-            ExecutionDecorator timeoutWrapper = NoOpExecution;
+            IExecutionPolicy timeoutWrapper = NoOpExecution;
             if (this.executionTimeout != null)
             {
                 timeoutWrapper = this.executionTimeout.Wrap(collapserWrapper);
             }
 
-            ExecutionDecorator semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
+            IExecutionPolicy semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
 
-            ExecutionDecorator circuitBreakerWrapper = NoOpExecution;
+            IExecutionPolicy circuitBreakerWrapper = NoOpExecution;
             if (this.circuitBreaker != null)
             {
                 circuitBreakerWrapper = this.circuitBreaker.Wrap(semaphoreWrapper);
