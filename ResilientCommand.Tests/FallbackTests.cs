@@ -59,7 +59,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TestException))]
+        [ExpectedInnerException(typeof(TestException))]
         public async Task Command_WithoutFallback_ShouldThrow()
         {
             var command = new FailFastCommand(shouldThrow: true);
@@ -67,7 +67,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TestException))]
+        [ExpectedInnerException(typeof(TestException))]
         public async Task Fallback_WithDisabledFallback_FallbackIsSkippedAndThrows()
         {
             var command = new FailFastWithFallbackCommand(
@@ -90,7 +90,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TestException))]
+        [ExpectedInnerException(typeof(TestException))]
         public async Task Fallback_WithNotImplementedFallback_ShouldThrow()
         {
             var command = new FailFastCommand(shouldThrow: true);
@@ -99,7 +99,7 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TestException))]
+        [ExpectedInnerException(typeof(TestException))]
         public async Task Fallback_WithRuntimeFallbackDisable_FallbackIsSkippedAndThrows()
         {
             var fallbackValue = "fallback";

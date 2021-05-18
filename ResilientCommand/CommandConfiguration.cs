@@ -9,6 +9,7 @@ namespace ResilientCommand
     using static ResilientCommand.CollapserSettings;
     using static ResilientCommand.ExecutionTimeoutSettings;
     using static ResilientCommand.FallbackSettings;
+    using static ResilientCommand.SemaphoreSettings;
 
     /// <summary>
     /// Command Configuration.
@@ -60,7 +61,7 @@ namespace ResilientCommand
         /// <value>
         /// The maximum parallelism.
         /// </value>
-        public ushort MaxParallelism { get; set; } = 10;
+        public SemaphoreSettings SemaphoreSettings { get; set; } = DefaultSemaphoreSettings;
 
         /// <summary>
         /// Creates the configuration with default values.
@@ -122,6 +123,11 @@ namespace ResilientCommand
             if (commandConfiguration.FallbackSettings == null)
             {
                 throw new ArgumentNullException(nameof(commandConfiguration.FallbackSettings));
+            }
+
+            if (commandConfiguration.SemaphoreSettings == null)
+            {
+                throw new ArgumentNullException(nameof(commandConfiguration.SemaphoreSettings));
             }
         }
     }

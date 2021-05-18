@@ -17,6 +17,7 @@ namespace ResilientCommand
     public abstract class ResilientCommand<TResult>
     {
         private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
+        private static readonly NoOpExecution NoOpExecution = new ();
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
         private readonly CommandKey commandKey;
@@ -24,7 +25,7 @@ namespace ResilientCommand
         private readonly ResilientCommandEventNotifier eventNotifier;
         private readonly ExecutionTimeout executionTimeout;
         private readonly ICache resultCache;
-        private readonly SemaphoreSlim semaphore;
+        private readonly Semaphore semaphore;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResilientCommand{TResult}"/> class.
@@ -73,8 +74,6 @@ namespace ResilientCommand
 
             try
             {
-                await this.semaphore.WaitAsync();
-
                 result = await this.WrappedExecutionAsync(cancellationToken);
 
                 if (this.IsCachedResponseEnabled)
@@ -95,10 +94,6 @@ namespace ResilientCommand
                 }
 
                 return this.HandleFallback(ex);
-            }
-            finally
-            {
-                this.semaphore.Release();
             }
         }
 
@@ -203,38 +198,34 @@ namespace ResilientCommand
             return null;
         }
 
-        private SemaphoreSlim InitSemaphore()
+        private Semaphore InitSemaphore()
         {
-            return SemaphoreFactory.GetOrCreateSemaphore(this.commandKey, this.configuration.MaxParallelism);
+            return SemaphoreFactory.GetOrCreateSemaphore(this.commandKey, this.eventNotifier, this.configuration.SemaphoreSettings);
         }
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
-            Task<TResult> collapsedTask = null;
-            if (this.configuration.CollapserSettings.IsEnabled)
+            ExecutionDecorator collapserWrapper = NoOpExecution;
+            if (this.collapser != null)
             {
-                collapsedTask = this.collapser.ExecuteAsync(this.RunAsync, cancellationToken);
+                collapserWrapper = this.collapser;
             }
 
-            Task<TResult> timeoutTask = null;
-            if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
+            ExecutionDecorator timeoutWrapper = NoOpExecution;
+            if (this.executionTimeout != null)
             {
-                timeoutTask = this.executionTimeout.ExecuteAsync(
-                    innerAction: (ct) => collapsedTask ?? this.RunAsync(ct),
-                    cancellationToken);
+                timeoutWrapper = this.executionTimeout.Wrap(collapserWrapper);
             }
 
-            Task<TResult> circuitBreakerTask = null;
-            if (this.configuration.CircuitBreakerSettings.IsEnabled)
+            ExecutionDecorator semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
+
+            ExecutionDecorator circuitBreakerWrapper = NoOpExecution;
+            if (this.circuitBreaker != null)
             {
-                circuitBreakerTask = this.circuitBreaker.ExecuteAsync(
-                    innerAction: (ct) => timeoutTask ?? this.RunAsync(ct),
-                    cancellationToken);
+                circuitBreakerWrapper = this.circuitBreaker.Wrap(semaphoreWrapper);
             }
 
-            Task<TResult> resultTask = circuitBreakerTask ?? timeoutTask ?? collapsedTask ?? this.RunAsync(cancellationToken);
-
-            return await resultTask;
+            return await circuitBreakerWrapper.ExecuteAsync(async (ct) => await this.RunAsync(ct), cancellationToken);
         }
     }
 }

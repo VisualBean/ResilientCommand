@@ -5,6 +5,19 @@ using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
 {
+    public class LongCommand : ResilientCommand<string>
+    {
+        public LongCommand(CommandConfiguration configuration) : base(configuration: configuration)
+        {
+                
+        }
+
+        protected override async Task<string> RunAsync(CancellationToken cancellationToken)
+        {
+            await Task.Delay(10000);
+            return "success";
+        }
+    }
     public class CancellationCommand : ResilientCommand<string>
     {
         protected override Task<string> RunAsync(CancellationToken cancellationToken)

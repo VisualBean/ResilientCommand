@@ -111,7 +111,7 @@ namespace ResilientCommand.Tests
             }
 
             settings.IsEnabled = false;
-            await circuit.ExecuteAsync<int>((ct) => { return Task.FromResult(1); });
+            await circuit.ExecuteAsync((ct) => { return Task.FromResult(1); });
 
         }
 

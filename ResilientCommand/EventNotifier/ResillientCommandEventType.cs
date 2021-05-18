@@ -85,5 +85,6 @@ namespace ResilientCommand
         /// If execution was collapsed.
         /// </remarks>
         Collapsed,
+        SemaphoreRejected,
     }
 }

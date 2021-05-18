@@ -16,12 +16,12 @@ namespace ResilientCommand.Tests
 
             try
             {
-                await timeout.ExecuteAsync<int>(async (ct) => { await Task.Delay(10); return 1; }, default);
+                await timeout.ExecuteAsync(async (ct) => { await Task.Delay(10); return 1; }, default);
             }
             catch (TimeoutException)
             {
                 settings.IsEnabled = false;
-                await timeout.ExecuteAsync<int>(async (ct) => { await Task.Delay(5); return 1; }, default);
+                await timeout.ExecuteAsync(async (ct) => { await Task.Delay(5); return 1; }, default);
             }
         }
 
@@ -31,7 +31,7 @@ namespace ResilientCommand.Tests
         {
             var cmdKey = new CommandKey(Guid.NewGuid().ToString());
             var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(executionTimeoutInMilliseconds: 1));
-            await timeout.ExecuteAsync<int>(async (ct) => { await Task.Delay(10); return 1; }, default);
+            await timeout.ExecuteAsync(async (ct) => { await Task.Delay(10); return 1; }, default);
         }
 
         [TestMethod]

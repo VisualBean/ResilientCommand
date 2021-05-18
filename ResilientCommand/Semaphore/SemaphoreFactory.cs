@@ -16,19 +16,20 @@ namespace ResilientCommand
         /// <summary>
         /// The semaphore by group key.
         /// </summary>
-        private static readonly ConcurrentDictionary<CommandKey, Lazy<SemaphoreSlim>> SemaphoreByGroupKey = new ConcurrentDictionary<CommandKey, Lazy<SemaphoreSlim>>();
+        private static readonly ConcurrentDictionary<CommandKey, Lazy<Semaphore>> SemaphoreByGroupKey = new ConcurrentDictionary<CommandKey, Lazy<Semaphore>>();
 
         /// <summary>
         /// Gets the or create semaphore.
         /// </summary>
         /// <param name="commandKey">The command key.</param>
-        /// <param name="concurrentThreads">The concurrent threads.</param>
+        /// <param name="eventNotifier">The event notifier.</param>
+        /// <param name="semaphoreSettings">The semaphore settings.</param>
         /// <returns>
-        /// A <see cref="SemaphoreSlim"/>.
+        /// A <see cref="SemaphoreSlim" />.
         /// </returns>
-        internal static SemaphoreSlim GetOrCreateSemaphore(CommandKey commandKey, ushort concurrentThreads)
+        internal static Semaphore GetOrCreateSemaphore(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, SemaphoreSettings semaphoreSettings)
         {
-            return SemaphoreByGroupKey.GetOrAdd(commandKey, new Lazy<SemaphoreSlim>(() => new SemaphoreSlim(concurrentThreads, concurrentThreads))).Value;
+            return SemaphoreByGroupKey.GetOrAdd(commandKey, new Lazy<Semaphore>(() => new Semaphore(commandKey, eventNotifier, semaphoreSettings))).Value;
         }
     }
 }

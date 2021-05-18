@@ -21,5 +21,21 @@ namespace ResilientCommand
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task.</returns>
         public abstract Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Wraps the specified inner decorator in the outer decorator.
+        /// </summary>
+        /// <param name="inner">The inner.</param>
+        /// <returns>A wrapper.</returns>
+        /// <exception cref="ArgumentNullException">nameof(inner).</exception>
+        internal Wrapper Wrap(ExecutionDecorator inner)
+        {
+            if (inner is null)
+            {
+                throw new ArgumentNullException(nameof(inner));
+            }
+
+            return new Wrapper(this, inner);
+        }
     }
 }
