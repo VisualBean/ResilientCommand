@@ -1,4 +1,4 @@
-![.Net](https://github.com/VisualBean/ResilientCommand/workflows/.Net/badge.svg)[![NuGet version](https://badge.fury.io/nu/ResilientCommand.svg)](https://badge.fury.io/nu/ResilientCommand)
+![.Net](https://github.com/VisualBean/ResilientCommand/workflows/.Net/badge.svg) [![NuGet version](https://badge.fury.io/nu/ResilientCommand.svg)](https://badge.fury.io/nu/ResilientCommand)
 
 # ResilientCommand
 A Resiliency library for wrapping dependency calls. Heavily inspired by Hystrix
