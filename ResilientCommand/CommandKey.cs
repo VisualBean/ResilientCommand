@@ -4,6 +4,8 @@
 
 namespace ResilientCommand
 {
+    using System;
+
     /// <summary>
     /// A Key that represents a <see cref="ResilientCommand{TResult}"/>.
     /// </summary>
@@ -19,19 +21,13 @@ namespace ResilientCommand
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new System.ArgumentException($"'{nameof(key)}' cannot be null or whitespace", nameof(key));
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or whitespace", nameof(key));
             }
 
             this.key = key;
         }
 
-        /// <summary>
-        /// Gets the key.
-        /// </summary>
-        /// <value>
-        /// The key.
-        /// </value>
-        public string Key => this.key;
+        public static implicit operator string(CommandKey key) => key.key;
 
         /// <inheritdoc/>
         public override bool Equals(object obj)
