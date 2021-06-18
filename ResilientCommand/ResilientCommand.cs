@@ -14,7 +14,7 @@ namespace ResilientCommand
     /// An abstract command.
     /// </summary>
     /// <typeparam name="TResult">The type of the result.</typeparam>
-    public abstract class ResilientCommand<TResult>
+    public abstract class ResilientCommand<TResult> : IResilientCommand<TResult>
     {
         private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
         private static readonly IExecutionPolicy NoOpExecution = new NoOpExecution();
