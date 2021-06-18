@@ -21,7 +21,6 @@ namespace ResilientCommand
 
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
-        private readonly CommandKey commandKey;
         private readonly CommandConfiguration configuration;
         private readonly ResilientCommandEventNotifier eventNotifier;
         private readonly ExecutionTimeout executionTimeout;
@@ -45,9 +44,8 @@ namespace ResilientCommand
             ICache cache = null,
             CommandConfiguration configuration = null)
         {
-            this.commandKey = commandKey ?? new CommandKey(this.GetType().Name);
-            this.configuration = configuration ?? CommandConfiguration.CreateConfiguration();
-
+            this.CommandKey = commandKey ?? new CommandKey(this.GetType().Name);
+            this.configuration = this.InitConfiguration(configuration);
             this.eventNotifier = this.InitEventNotifier();
             this.circuitBreaker = this.InitCircuitBreaker(circuitBreaker);
             this.executionTimeout = this.InitExecutionTimeout(executionTimeout);
@@ -55,6 +53,14 @@ namespace ResilientCommand
             this.collapser = this.InitCollapser(collapser);
             this.resultCache = this.InitCache(cache);
         }
+
+        /// <summary>
+        /// Gets the command key.
+        /// </summary>
+        /// <value>
+        /// The command key.
+        /// </value>
+        public CommandKey CommandKey { get; }
 
         private bool IsCachedResponseEnabled => this.GetCacheKey() != null;
 
@@ -69,7 +75,7 @@ namespace ResilientCommand
 
             if (this.IsCachedResponseEnabled && this.resultCache.TryGet(cacheKey, out TResult result))
             {
-                this.eventNotifier.RaiseEvent(ResilientCommandEventType.ResponseFromCache, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.ResponseFromCache, this.CommandKey);
                 return result;
             }
 
@@ -82,7 +88,7 @@ namespace ResilientCommand
                     this.resultCache.TryAdd(cacheKey, result);
                 }
 
-                this.eventNotifier.RaiseEvent(ResilientCommandEventType.Success, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.Success, this.CommandKey);
                 return result;
             }
             catch (Exception ex) when (!(ex is ResilientCommandException))
@@ -90,7 +96,7 @@ namespace ResilientCommand
                 switch (ex)
                 {
                     default:
-                        this.eventNotifier.RaiseEvent(ResilientCommandEventType.Failure, this.commandKey);
+                        this.eventNotifier.RaiseEvent(ResilientCommandEventType.Failure, this.CommandKey);
                         break;
                 }
 
@@ -131,13 +137,13 @@ namespace ResilientCommand
         {
             if (!this.configuration.FallbackSettings.IsEnabled)
             {
-                this.eventNotifier.RaiseEvent(ResilientCommandEventType.FallbackDisabled, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.FallbackDisabled, this.CommandKey);
                 throw innerException;
             }
 
             if (!this.HasFallback())
             {
-                this.eventNotifier.RaiseEvent(ResilientCommandEventType.FallbackMissing, this.commandKey);
+                this.eventNotifier.RaiseEvent(ResilientCommandEventType.FallbackMissing, this.CommandKey);
                 throw innerException;
             }
 
@@ -146,7 +152,7 @@ namespace ResilientCommand
 
         private bool HasFallback()
         {
-            if (ContainsFallback.TryGetValue(this.commandKey, out bool hasFallback))
+            if (ContainsFallback.TryGetValue(this.CommandKey, out bool hasFallback))
             {
                 return hasFallback;
             }
@@ -154,7 +160,7 @@ namespace ResilientCommand
             var methodInfo = this.GetType().GetMethod(nameof(this.Fallback), BindingFlags.Instance | BindingFlags.NonPublic);
             hasFallback = methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
 
-            ContainsFallback.TryAdd(this.commandKey, hasFallback);
+            ContainsFallback.TryAdd(this.CommandKey, hasFallback);
 
             return hasFallback;
         }
@@ -168,7 +174,7 @@ namespace ResilientCommand
         {
             if (this.configuration.CircuitBreakerSettings.IsEnabled)
             {
-                return circuitBreaker ?? CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(this.commandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
+                return circuitBreaker ?? CircuitBreakerFactory.GetInstance().GetOrCreateCircuitBreaker(this.CommandKey, this.eventNotifier, this.configuration.CircuitBreakerSettings);
             }
 
             return null;
@@ -178,10 +184,15 @@ namespace ResilientCommand
         {
             if (this.configuration.CollapserSettings.IsEnabled)
             {
-                return collapser ?? CollapserFactory.GetInstance().GetOrCreateCollapser(this.commandKey, this.eventNotifier, this.configuration.CollapserSettings);
+                return collapser ?? CollapserFactory.GetInstance().GetOrCreateCollapser(this.CommandKey, this.eventNotifier, this.configuration.CollapserSettings);
             }
 
             return null;
+        }
+
+        private CommandConfiguration InitConfiguration(CommandConfiguration configuration)
+        {
+            return CommandConfigurationManager.GetOrCreateCommandConfiguration(this.CommandKey, configuration ?? CommandConfiguration.CreateConfiguration());
         }
 
         private ResilientCommandEventNotifier InitEventNotifier()
@@ -193,7 +204,7 @@ namespace ResilientCommand
         {
             if (this.configuration.ExecutionTimeoutSettings.IsEnabled)
             {
-                return executionTimeout ?? new ExecutionTimeout(this.commandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
+                return executionTimeout ?? new ExecutionTimeout(this.CommandKey, this.eventNotifier, this.configuration.ExecutionTimeoutSettings);
             }
 
             return null;
@@ -201,7 +212,7 @@ namespace ResilientCommand
 
         private Semaphore InitSemaphore()
         {
-            return SemaphoreFactory.GetOrCreateSemaphore(this.commandKey, this.eventNotifier, this.configuration.SemaphoreSettings);
+            return SemaphoreFactory.GetInstance().GetOrCreateSemaphore(this.CommandKey, this.eventNotifier, this.configuration.SemaphoreSettings);
         }
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
