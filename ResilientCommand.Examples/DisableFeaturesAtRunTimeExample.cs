@@ -18,7 +18,7 @@ namespace ResilientCommand.Examples
 
     class DisableFeaturesAtRunTimeExample
     {
-        static async Task DisableFeaturesAtRunTimeExample()
+        static async Task DisableAtRunTimeExample()
         {
             // Set notifier to use consolenotifier.
             EventNotifierFactory.GetInstance().SetEventNotifier(new ConsoleEventNotifier());
