@@ -28,11 +28,13 @@ namespace ResilientCommand.Tests
     {
         private readonly string fallbackValue;
         private readonly bool throwException;
+        public readonly CommandConfiguration configuration;
 
-        public FailFastWithFallbackCommand(string fallbackValue, bool shouldThrow, CommandConfiguration configuration = null) : base(configuration: configuration)
+        public FailFastWithFallbackCommand(string fallbackValue, bool shouldThrow, CommandKey key = null, CommandConfiguration configuration = null) : base(commandKey: key, configuration: configuration)
         {
             this.fallbackValue = fallbackValue;
             this.throwException = shouldThrow;
+            this.configuration = configuration;
         }
         protected override string Fallback()
         {
@@ -73,7 +75,7 @@ namespace ResilientCommand.Tests
             var command = new FailFastWithFallbackCommand(
                 "fallback",
                 shouldThrow: true,
-                CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = new FallbackSettings(false)));
+                configuration: CommandConfiguration.CreateConfiguration(c => c.FallbackSettings = new FallbackSettings(false)));
 
             await command.ExecuteAsync(default);
         }
@@ -82,8 +84,7 @@ namespace ResilientCommand.Tests
         public async Task Fallback_WithFallback_ShouldReturnFallback()
         {
             var fallbackValue = "fallback";
-            var command = new FailFastWithFallbackCommand(fallbackValue, shouldThrow: true);
-
+            var command = new FailFastWithFallbackCommand(fallbackValue, shouldThrow: true, key: new CommandKey("test"));
             var result = await command.ExecuteAsync(default);
 
             result.Should().Be(fallbackValue);
@@ -109,7 +110,7 @@ namespace ResilientCommand.Tests
             var command = new FailFastWithFallbackCommand(
                 fallbackValue,
                 shouldThrow: true,
-                configuration);
+                configuration: configuration);
 
             var result = await command.ExecuteAsync(default);
             Assert.AreEqual(fallbackValue, result);

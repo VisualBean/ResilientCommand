@@ -5,6 +5,7 @@
 namespace ResilientCommand
 {
     using System;
+    using System.Collections.Concurrent;
     using static ResilientCommand.CircuitBreakerSettings;
     using static ResilientCommand.CollapserSettings;
     using static ResilientCommand.ExecutionTimeoutSettings;
