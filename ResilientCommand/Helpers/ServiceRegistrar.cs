@@ -2,7 +2,7 @@
 // Copyright (c) Visualbean. All rights reserved.
 // </copyright>
 
-namespace ResilientCommand.Helpers
+namespace ResilientCommand.DependencyInjection
 {
     using System;
     using System.Collections.Generic;
