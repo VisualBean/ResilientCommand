@@ -11,12 +11,26 @@ namespace ResilientCommand
     /// <summary>
     /// A semaphore factory.
     /// </summary>
-    internal static class SemaphoreFactory
+    internal class SemaphoreFactory
     {
+        /// <summary>
+        /// The singeton instance.
+        /// </summary>
+        private static readonly Lazy<SemaphoreFactory>
+         Instance =
+         new Lazy<SemaphoreFactory>(
+             () => new SemaphoreFactory());
+
         /// <summary>
         /// The semaphore by group key.
         /// </summary>
         private static readonly ConcurrentDictionary<CommandKey, Lazy<Semaphore>> SemaphoreByGroupKey = new ConcurrentDictionary<CommandKey, Lazy<Semaphore>>();
+
+        /// <summary>
+        /// Gets the instance.
+        /// </summary>
+        /// <returns>A <see cref="SemaphoreFactory"/>.</returns>
+        internal static SemaphoreFactory GetInstance() => Instance.Value;
 
         /// <summary>
         /// Gets the or create semaphore.
@@ -27,7 +41,7 @@ namespace ResilientCommand
         /// <returns>
         /// A <see cref="SemaphoreSlim" />.
         /// </returns>
-        internal static Semaphore GetOrCreateSemaphore(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, SemaphoreSettings semaphoreSettings)
+        internal Semaphore GetOrCreateSemaphore(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, SemaphoreSettings semaphoreSettings)
         {
             return SemaphoreByGroupKey.GetOrAdd(commandKey, new Lazy<Semaphore>(() => new Semaphore(commandKey, eventNotifier, semaphoreSettings))).Value;
         }
