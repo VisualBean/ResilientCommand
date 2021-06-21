@@ -44,10 +44,10 @@ namespace ResilientCommand
             this.circuitbreakerPolicy = Policy
             .Handle<Exception>()
             .AdvancedCircuitBreakerAsync(
-                failureThreshold: settings.FailureThreshhold,
-                samplingDuration: TimeSpan.FromMilliseconds(settings.SamplingDurationMilliseconds),
-                minimumThroughput: settings.MinimumThroughput,
-                durationOfBreak: TimeSpan.FromMilliseconds(settings.DurationMilliseconds),
+                failureThreshold: this.settings.FailureThreshhold,
+                samplingDuration: TimeSpan.FromMilliseconds(this.settings.SamplingDurationMilliseconds),
+                minimumThroughput: this.settings.MinimumThroughput,
+                durationOfBreak: TimeSpan.FromMilliseconds(this.settings.DurationMilliseconds),
                 onBreak: (ex, ts) =>
                 {
                     eventNotifier.RaiseEvent(ResilientCommandEventType.CircuitBroken, commandKey);
