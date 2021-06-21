@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
         dotnet: [ '2.1.x', '3.1.x', '5.0.x' ]
-    name: Dotnet ${{ matrix.dotnet }}
+    name: ${{ matrix.os }} - Dotnet ${{ matrix.dotnet }}
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET
