@@ -3,7 +3,28 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/VisualBean/ResilientCommand</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/VisualBean/ResilientCommand</RepositoryUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageReleaseNotes>* Fixed issue with null settings in specific scenario.  
+* Moved Collapse to be before everything else.
+* Fixed wrapping when using disabled by default features.
+* Added ability to set the Semaphore for bulkheading.</PackageReleaseNotes>
+    <Authors>Visualbean</Authors>
+    <Version>1.1.1</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="https:\**" />
+    <EmbeddedResource Remove="https:\**" />
+    <None Remove="https:\**" />
+    <None Include="Z:\Documents\Development\Projects\ResilientCommand\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="stylecop.json" />
@@ -22,8 +43,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
     <PackageReference Include="Polly" Version="7.2.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
       <PrivateAssets>all</PrivateAssets>
