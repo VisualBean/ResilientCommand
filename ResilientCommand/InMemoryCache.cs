@@ -2,6 +2,11 @@
 // Copyright (c) Visualbean. All rights reserved.
 // </copyright>
 
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("ResilientCommand.Tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+
 namespace ResilientCommand
 {
     using System;
