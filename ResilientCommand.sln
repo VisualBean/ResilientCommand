@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientCommand", "Resilie
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientCommand.Tests", "ResilientCommand.Tests\ResilientCommand.Tests.csproj", "{A4A05226-D959-496D-8EEE-47F27755AD85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResilientCommand.Examples", "ResilientCommand.Examples\ResilientCommand.Examples.csproj", "{8CBBED11-CD05-4B1F-BF03-60C630BAD417}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResilientCommand.Examples", "ResilientCommand.Examples\ResilientCommand.Examples.csproj", "{8CBBED11-CD05-4B1F-BF03-60C630BAD417}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
