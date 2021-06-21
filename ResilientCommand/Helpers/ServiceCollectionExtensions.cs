@@ -1,4 +1,4 @@
-﻿// <copyright file="DependencyInjectionExtensions.cs" company="Visualbean">
+﻿// <copyright file="ServiceCollectionExtensions.cs" company="Visualbean">
 // Copyright (c) Visualbean. All rights reserved.
 // </copyright>
 
