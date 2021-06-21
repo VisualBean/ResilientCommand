@@ -6,7 +6,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/VisualBean/ResilientCommand</PackageProjectUrl>
     <RepositoryUrl>https://github.com/VisualBean/ResilientCommand</RepositoryUrl>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseFile></PackageLicenseFile>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageReleaseNotes>* Fixed issue with null settings in specific scenario.  
 * Moved Collapse to be before everything else.
@@ -20,10 +20,6 @@
     <Compile Remove="https:\**" />
     <EmbeddedResource Remove="https:\**" />
     <None Remove="https:\**" />
-    <None Include="Z:\Documents\Development\Projects\ResilientCommand\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
