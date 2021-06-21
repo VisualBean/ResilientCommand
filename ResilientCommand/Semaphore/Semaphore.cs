@@ -45,6 +45,8 @@ namespace ResilientCommand
         /// <exception cref="SemaphoreRejectedException">Thrown when the queue is full.</exception>
         public override async Task<TResult> ExecuteAsync<TResult>(Func<CancellationToken, Task<TResult>> innerAction, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 if (!await this.semaphoreSlim.WaitAsync(0))

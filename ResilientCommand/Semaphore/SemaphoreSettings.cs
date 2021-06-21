@@ -12,11 +12,14 @@ namespace ResilientCommand
         /// <summary>
         /// Initializes a new instance of the <see cref="SemaphoreSettings" /> class.
         /// </summary>
+        /// <param name="isEnabled">if set to <c>true</c> [is enabled].</param>
         /// <param name="maxParalellism">The maximum paralellism.</param>
         /// <returns>The semaphore settings.</returns>
         public SemaphoreSettings(
+            bool isEnabled = Default.IsEnabled,
             ushort maxParalellism = Default.MaxParallelism)
         {
+            this.IsEnabled = isEnabled;
             this.MaxParallelism = maxParalellism;
         }
 
@@ -37,6 +40,14 @@ namespace ResilientCommand
         public ushort MaxParallelism { get; private set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether this instance is enabled.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if this instance is enabled; otherwise, <c>false</c>.
+        /// </value>
+        public bool IsEnabled { get; set; }
+
+        /// <summary>
         /// Default settings.
         /// </summary>
         public sealed class Default
@@ -45,6 +56,11 @@ namespace ResilientCommand
             /// The default timeout window.
             /// </summary>
             public const ushort MaxParallelism = 10;
+
+            /// <summary>
+            /// The default value indicating whether bulkheading has been enabled.
+            /// </summary>
+            public const bool IsEnabled = true;
         }
     }
 }
