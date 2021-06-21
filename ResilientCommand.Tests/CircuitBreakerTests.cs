@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading;
@@ -138,7 +138,6 @@ namespace ResilientCommand.Tests
         }
 
         [TestMethod]
-
         public async Task CircuitBreakerCommand_InSameGroupWithFailures_ThrowsBrokenCircuit()
         {
             var fallbackValue = "fallback";
@@ -155,6 +154,20 @@ namespace ResilientCommand.Tests
             var response = await command2.ExecuteAsync(default); // Should go directly to fallback.
 
             Assert.AreEqual(fallbackValue, response);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OperationCanceledException))]
+        public async Task CircuitBreaker_WithCancelledToken_Cancels()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var settings = new CircuitBreakerSettings(isEnabled: false, failureThreshhold: 0.1, samplingDurationMilliseconds: int.MaxValue, minimumThroughput: 2);
+            var circuit = new CircuitBreaker(cmdKey, new TestNotifier(), settings);
+
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            await circuit.ExecuteAsync<int>(async (token) => 2, cts.Token);
         }
     }
 }

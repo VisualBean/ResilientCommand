@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ResilientCommand.Tests
@@ -54,6 +55,20 @@ namespace ResilientCommand.Tests
             settings.IsEnabled = false;
             result = await collapser.ExecuteAsync((ct) => { i++; return Task.FromResult(i); }, default);
             result.Should().Be(2);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OperationCanceledException))]
+        public async Task Collapser_WithCancelledToken_Cancels()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var settings = new CollapserSettings(isEnabled: true, window: TimeSpan.FromSeconds(1));
+            var collapser = new Collapser(cmdKey, new TestNotifier(), settings);
+
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            await collapser.ExecuteAsync<int>(async (token) => 2, cts.Token);
         }
     }
 }

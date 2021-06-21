@@ -70,5 +70,19 @@ namespace ResilientCommand.Tests
             var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(isEnabled: false, executionTimeoutInMilliseconds: 1));
             await timeout.ExecuteAsync(async (ct) => { await Task.Delay(10); return 1;}, default);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(OperationCanceledException))]
+        public async Task Timeout_WithCancelledToken_Cancels()
+        {
+            var cmdKey = new CommandKey(Guid.NewGuid().ToString());
+            var timeout = new ExecutionTimeout(cmdKey, new TestNotifier(), new ExecutionTimeoutSettings(executionTimeoutInMilliseconds: 1));
+           
+
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            await timeout.ExecuteAsync(async (ct) => { await Task.Delay(10); return 1; }, cts.Token);
+        }
     }
 }
