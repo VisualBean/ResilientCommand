@@ -17,7 +17,7 @@ namespace ResilientCommand
     public abstract class ResilientCommand<TResult> : IResilientCommand<TResult>
     {
         private static readonly ConcurrentDictionary<CommandKey, bool> ContainsFallback = new ConcurrentDictionary<CommandKey, bool>();
-        private static readonly IExecutionPolicy NoOpExecution = new NoOpExecution();
+        private static readonly ExecutionDecorator NoOpExecution = new NoOpExecution();
 
         private readonly CircuitBreaker circuitBreaker;
         private readonly Collapser collapser;
@@ -28,12 +28,13 @@ namespace ResilientCommand
         private readonly Semaphore semaphore;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ResilientCommand{TResult}"/> class.
+        /// Initializes a new instance of the <see cref="ResilientCommand{TResult}" /> class.
         /// </summary>
         /// <param name="commandKey">The command key.</param>
         /// <param name="circuitBreaker">The circuit breaker.</param>
         /// <param name="executionTimeout">The execution timeout.</param>
         /// <param name="collapser">The collapser.</param>
+        /// <param name="semaphore">The semaphore.</param>
         /// <param name="cache">The cache.</param>
         /// <param name="configuration">The configuration.</param>
         public ResilientCommand(
@@ -41,6 +42,7 @@ namespace ResilientCommand
             CircuitBreaker circuitBreaker = null,
             ExecutionTimeout executionTimeout = null,
             Collapser collapser = null,
+            Semaphore semaphore = null,
             ICache cache = null,
             CommandConfiguration configuration = null)
         {
@@ -49,7 +51,7 @@ namespace ResilientCommand
             this.eventNotifier = this.InitEventNotifier();
             this.circuitBreaker = this.InitCircuitBreaker(circuitBreaker);
             this.executionTimeout = this.InitExecutionTimeout(executionTimeout);
-            this.semaphore = this.InitSemaphore();
+            this.semaphore = this.InitSemaphore(semaphore);
             this.collapser = this.InitCollapser(collapser);
             this.resultCache = this.InitCache(cache);
         }
@@ -210,34 +212,43 @@ namespace ResilientCommand
             return null;
         }
 
-        private Semaphore InitSemaphore()
+        private Semaphore InitSemaphore(Semaphore semaphore)
         {
-            return SemaphoreFactory.GetInstance().GetOrCreateSemaphore(this.CommandKey, this.eventNotifier, this.configuration.SemaphoreSettings);
+            if (this.configuration.SemaphoreSettings.IsEnabled)
+            {
+                return semaphore ?? SemaphoreFactory.GetInstance().GetOrCreateSemaphore(this.CommandKey, this.eventNotifier, this.configuration.SemaphoreSettings);
+            }
+
+            return null;
         }
 
         private async Task<TResult> WrappedExecutionAsync(CancellationToken cancellationToken)
         {
-            IExecutionPolicy collapserWrapper = NoOpExecution;
-            if (this.collapser != null)
-            {
-                collapserWrapper = this.collapser;
-            }
-
             IExecutionPolicy timeoutWrapper = NoOpExecution;
             if (this.executionTimeout != null)
             {
-                timeoutWrapper = this.executionTimeout.Wrap(collapserWrapper);
+                timeoutWrapper = this.executionTimeout;
             }
 
-            IExecutionPolicy semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
+            IExecutionPolicy semaphoreWrapper = NoOpExecution.Wrap(timeoutWrapper);
+            if (this.semaphore != null)
+            {
+                semaphoreWrapper = this.semaphore.Wrap(timeoutWrapper);
+            }
 
-            IExecutionPolicy circuitBreakerWrapper = NoOpExecution;
+            IExecutionPolicy circuitBreakerWrapper = NoOpExecution.Wrap(semaphoreWrapper);
             if (this.circuitBreaker != null)
             {
                 circuitBreakerWrapper = this.circuitBreaker.Wrap(semaphoreWrapper);
             }
 
-            return await circuitBreakerWrapper.ExecuteAsync(async (ct) => await this.RunAsync(ct), cancellationToken);
+            IExecutionPolicy collapserWrapper = NoOpExecution.Wrap(circuitBreakerWrapper);
+            if (this.collapser != null)
+            {
+                collapserWrapper = this.collapser.Wrap(circuitBreakerWrapper);
+            }
+
+            return await collapserWrapper.ExecuteAsync(async (ct) => await this.RunAsync(ct), cancellationToken);
         }
     }
 }
