@@ -31,12 +31,12 @@ namespace ResilientCommand
         /// <param name="commandKey">The command key.</param>
         /// <param name="eventNotifier">The event notifier.</param>
         /// <param name="settings">The settings.</param>
-        public Collapser(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CollapserSettings settings)
+        public Collapser(CommandKey commandKey, ResilientCommandEventNotifier eventNotifier, CollapserSettings settings = null)
         {
             this.settings = settings ?? CollapserSettings.DefaultCollapserSettings;
 
             this.commandKey = commandKey;
-            this.windowInTicks = settings.Window.Ticks;
+            this.windowInTicks = this.settings.Window.Ticks;
             this.eventNotifier = eventNotifier;
         }
 
