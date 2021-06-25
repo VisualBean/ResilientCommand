@@ -13,7 +13,9 @@ or the [examples](https://github.com/VisualBean/ResilientCommand/tree/main/Resil
 # Getting started
 ## Step 1:
 Download the NuGet package [here](https://www.nuget.org/packages/ResilientCommand/)
-
+``` powershell
+Install-Package ResilientCommand
+```
 ## Step 2:
 Either add your commands as singletons/scoped yourself or use the helper
 ``` csharp
