@@ -9,7 +9,7 @@ namespace ResilientCommand
     /// <summary>
     /// A Key that represents a <see cref="ResilientCommand{TResult}"/>.
     /// </summary>
-    public class CommandKey
+    public sealed class CommandKey
     {
         private readonly string key;
 

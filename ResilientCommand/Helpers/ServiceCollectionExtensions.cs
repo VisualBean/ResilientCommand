@@ -33,10 +33,10 @@ namespace ResilientCommand.DependencyInjection
         }
 
         /// <summary>
-        ///  Automagically adds all ResilientCommands from the given assemblies.
+        /// Automagically adds all ResilientCommands from the given assemblies.
         /// </summary>
         /// <param name="services">The services.</param>
-        /// <param name="assemblies">The assemblies.</param>
+        /// <param name="types">The types.</param>
         public static void AddResilientCommands(this IServiceCollection services, params Type[] types)
         {
             AddResilientCommands(services, types.Select(t => t.GetTypeInfo().Assembly));
